@@ -1,6 +1,10 @@
 // JOYLUCK CLUB API — Vercel Serverless Function (Node) + Upstash Redis (REST)
-const URL_ = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-const TOK = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+// 환경변수 이름에 접두사가 붙어 있어도(예: STORAGE_KV_REST_API_URL) 자동으로 찾습니다.
+const pick = (re) => { const k = Object.keys(process.env).find((n) => re.test(n) && process.env[n]); return k ? process.env[k] : undefined; };
+const URL_ = pick(/(^|_)(KV_REST_API_URL|UPSTASH_REDIS_REST_URL)$/);
+const TOK = pick(/(^|_)(KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN)$/);
+const CODE = (process.env.CLUB_CODE || "").trim();
+const sameCode = (h) => { try { return decodeURIComponent(String(h || "")).trim() === CODE; } catch (_) { return false; } };
 
 async function r(cmd) {
   const x = await fetch(URL_, { method: "POST", headers: { Authorization: "Bearer " + TOK }, body: JSON.stringify(cmd) });
@@ -21,10 +25,9 @@ const dateOk = (d) => d === "" || /^\d{4}-\d{2}-\d{2}$/.test(d);
 
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
-  if (!URL_ || !TOK || !process.env.CLUB_CODE)
-    return res.status(500).json({ error: "서버 설정이 필요해요 (CLUB_CODE, Redis 연결)" });
-  if (req.headers["x-club-code"] !== process.env.CLUB_CODE)
-    return res.status(401).json({ error: "초대 코드가 맞지 않아요" });
+  const missing = [!CODE && "CLUB_CODE", !URL_ && "Redis URL(KV_REST_API_URL)", !TOK && "Redis TOKEN(KV_REST_API_TOKEN)"].filter(Boolean);
+  if (missing.length) return res.status(500).json({ error: "서버 설정이 필요해요: " + missing.join(", ") + " 이(가) 없어요. 설정 후 Redeploy 해주세요." });
+  if (!sameCode(req.headers["x-club-code"])) return res.status(401).json({ error: "초대 코드가 맞지 않아요" });
   try {
     if (req.method === "GET") {
       const [books, entries, att, members] = await Promise.all(
@@ -53,6 +56,7 @@ module.exports = async (req, res) => {
         id = newId();
         await r(["HSET", "jl:books", id, JSON.stringify({
           id, title, author: s(b.author, 100), month: s(b.month, 7), meetDate,
+          cover: /^https:\/\//.test(s(b.cover, 500)) ? s(b.cover, 500) : "",
           place: s(b.place, 100), uid, ts: Date.now(),
         })]);
         break;

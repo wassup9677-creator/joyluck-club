@@ -64,6 +64,13 @@ details summary{cursor:pointer;color:var(--red);font-weight:700}
 .bk{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
 .bk:first-child{border-top:0}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:13px;display:none}
+.cv{width:64px;height:92px;object-fit:cover;border-radius:4px;border:1px solid var(--line);flex:none;background:var(--bg)}
+.cv.sm{width:40px;height:58px}.cv.lg{width:96px;height:138px;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.cv.ph{display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--mute)}
+.sr{display:flex;gap:10px;padding:8px;border:1px solid var(--line);border-radius:8px;cursor:pointer;align-items:center}.sr:hover{border-color:var(--gold)}
+.sr b{font-family:"Noto Serif KR",serif;font-size:14px}
+.seg{display:flex;gap:6px;margin-bottom:14px}.seg button{flex:1;padding:9px;border:1px solid var(--line);background:var(--card);color:var(--mute);border-radius:8px;font:500 14px inherit;font-family:inherit;cursor:pointer}.seg button.on{background:var(--red);color:var(--on-red);border-color:var(--red);font-weight:700}
+.ck,.rc{padding:8px 0;border-top:1px solid var(--line);cursor:pointer;font-size:14px}.ck:first-of-type,.rc:first-of-type{border-top:0}.ck.ok{color:var(--mute)}
 </style>
 </head>
 <body>
@@ -78,11 +85,11 @@ details summary{cursor:pointer;color:var(--red);font-weight:700}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const ls={get:k=>{try{return localStorage.getItem(k)}catch(_){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}}};
-const S={books:[],entries:[],att:[],members:[],uid:ls.get("jl_uid"),name:ls.get("jl_name")||"",code:ls.get("jl_code")||"",cur:null,tab:"home",draft:{},ready:false,auth:false,rating:5,err:""};
+const S={books:[],entries:[],att:[],members:[],uid:ls.get("jl_uid"),name:ls.get("jl_name")||"",code:ls.get("jl_code")||"",cur:null,tab:"home",draft:{},ready:false,auth:false,rating:5,seg:"review",err:"",bf:{},res:[],bfOpen:false,searching:false};
 if(!S.uid){S.uid="u"+Math.random().toString(36).slice(2,10)+Date.now().toString(36);ls.set("jl_uid",S.uid)}
 const hm=/code=([^&]+)/.exec(location.hash);
 if(hm){try{S.code=decodeURIComponent(hm[1])}catch(_){S.code=hm[1]}ls.set("jl_code",S.code);history.replaceState(null,"",location.pathname)}
-const TABS=[["home","이달의 책"],["review","독후감"],["prompt","발제문"],["books","책 목록"],["members","멤버"]];
+const TABS=[["home","홈"],["log","기록"],["books","책"],["members","멤버"]];
 function toast(m){const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display="none",2400)}
 const nm=u=>{const m=S.members.find(x=>x.uid===u);return m?m.name:"멤버"};
 const book=()=>S.books.find(b=>b.id===S.cur)||S.books[0];
@@ -92,7 +99,7 @@ const ent=(b,t)=>S.entries.filter(e=>e.bookId===b.id&&e.type===t).sort((a,c)=>c.
 const sortBooks=()=>S.books.sort((a,b)=>(b.month||"").localeCompare(a.month||"")||b.ts-a.ts);
 
 async function api(body){
-  const r=await fetch("/api/db",{method:body?"POST":"GET",headers:{"Content-Type":"application/json","x-club-code":S.code},body:body?JSON.stringify(body):undefined});
+  const r=await fetch("/api/db",{method:body?"POST":"GET",headers:{"Content-Type":"application/json","x-club-code":encodeURIComponent(S.code)},body:body?JSON.stringify(body):undefined});
   const j=await r.json().catch(()=>({}));
   if(!r.ok){const e=new Error(j.error||"요청에 실패했어요");e.status=r.status;throw e}
   return j;
@@ -114,7 +121,7 @@ function render(){
     if(S.tab==="books")h=booksView();
     else if(S.tab==="members")h=membersView();
     else if(!b)h=(S.tab==="home"?schedule():"")+'<div class="card empty">아직 등록된 책이 없어요.<br>‘책 목록’ 탭에서 첫 책을 등록해 주세요.</div>';
-    else h=(S.tab==="home"?schedule():"")+picker(b)+(S.tab==="home"?home(b):entries(b,S.tab));
+    else h=(S.tab==="home"?schedule():"")+picker(b)+(S.tab==="home"?home(b):logView(b));
   }
   $("#app").innerHTML=h;
   if(aid){const e=document.getElementById(aid);if(e){e.focus();try{e.setSelectionRange(ss,ss)}catch(_){}}}
@@ -134,10 +141,18 @@ function picker(b){return `<select id="pick" aria-label="책 선택" style="marg
 function home(b){
   const at=S.att.filter(x=>x.bookId===b.id),mine=at.find(x=>x.uid===S.uid),st=mine&&mine.status;
   const grp=s=>at.filter(x=>x.status===s).map(x=>`<span class="chip ${s==="y"?"y":"n"}">${esc(nm(x.uid))}</span>`).join("")||'<span class="meta">없음</span>';
-  return `<div class="card"><div class="lbl">이달의 책 ${esc(b.month||"")}</div><div class="bt">${esc(b.title)}</div><div class="meta">${esc(b.author||"")}</div></div>
+  const myR=ent(b,"review").some(e=>e.uid===S.uid),myP=ent(b,"prompt").some(e=>e.uid===S.uid);
+  const ck=(ok,l,go)=>`<div class="ck ${ok?"ok":""}" ${go?`data-goto="${go}"`:""}>${ok?"✅":"⬜"} ${l}</div>`;
+  const recent=S.entries.filter(e=>e.bookId===b.id).sort((a,c)=>c.ts-a.ts).slice(0,3);
+  return `<div class="card" style="display:flex;gap:14px;align-items:flex-start">${b.cover?cov(b.cover,"lg"):""}<div style="flex:1;min-width:0"><div class="lbl">이달의 책 ${esc(b.month||"")}</div><div class="bt">${esc(b.title)}</div><div class="meta">${esc(b.author||"")}</div></div></div>
+  <div class="card"><div class="lbl">내 할 일</div><div style="margin-top:6px">${ck(!!st,"출석 응답하기")}${ck(myR,"독후감 쓰기","review")}${ck(myP,"발제문 올리기","prompt")}</div></div>
   <div class="card"><div class="lbl">출석</div><div class="row" style="margin:10px 0">${[["y","참석"],["m","미정"],["n","불참"]].map(([k,l])=>`<button class="btn ${st===k?"on":"ghost"}" data-act="att" data-s="${k}" style="flex:1">${l}</button>`).join("")}</div>
   <div class="meta">참석</div><div class="chips">${grp("y")}</div><div class="meta" style="margin-top:10px">미정</div><div class="chips">${grp("m")}</div><div class="meta" style="margin-top:10px">불참</div><div class="chips">${grp("n")}</div></div>
-  <div class="card"><div class="lbl">기록 현황</div><div style="margin-top:6px">독후감 ${ent(b,"review").length}편 · 발제문 ${ent(b,"prompt").length}개</div></div>`+shareCard()+printBtns("book");
+  <div class="card"><div class="lbl">최근 기록</div><div style="margin-top:6px">${recent.map(e=>`<div class="rc" data-goto="${e.type}"><b>${esc(nm(e.uid))}</b> · ${e.type==="review"?"독후감":"발제문"}<div class="meta">${esc(e.text.slice(0,60))}${e.text.length>60?"…":""}</div></div>`).join("")||'<div class="meta">아직 기록이 없어요.</div>'}</div></div>`;
+}
+function logView(b){
+  const nr=ent(b,"review").length,np=ent(b,"prompt").length;
+  return `<div class="seg"><button data-seg="review" class="${S.seg==="review"?"on":""}">독후감 ${nr}</button><button data-seg="prompt" class="${S.seg==="prompt"?"on":""}">발제문 ${np}</button></div>`+entries(b,S.seg)+printBtns("book");
 }
 function entries(b,t){
   const isR=t==="review",list=ent(b,t),d=S.draft[t]||"";
@@ -148,10 +163,26 @@ function entries(b,t){
   const items=list.map(e=>`<div class="card ent"><div class="who"><b>${esc(nm(e.uid))}</b><span>${e.type==="review"&&e.rating?`<span class="star">${"★".repeat(e.rating)}${"☆".repeat(5-e.rating)}</span> `:""}${new Date(e.ts).toLocaleDateString("ko-KR")} <button class="x" data-act="print" data-mode="one:${e.id}">인쇄</button>${e.uid===S.uid?` <button class="x" data-act="del" data-id="${e.id}">삭제</button>`:""}</span></div><p>${esc(e.text)}</p></div>`).join("");
   return form+(list.length?printBtns(t):"")+(items||`<div class="empty">아직 ${isR?"독후감이":"발제문이"} 없어요. 첫 기록을 남겨 보세요.</div>`);
 }
+const cov=(u,c="")=>u?`<img class="cv ${c}" src="${esc(u)}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.visibility='hidden'">`:`<div class="cv ${c} ph">📖</div>`;
+async function searchBooks(q){
+  const r=await fetch("https://www.googleapis.com/books/v1/volumes?maxResults=8&printType=books&q="+encodeURIComponent(q));
+  if(!r.ok)throw new Error(r.status===429?"검색 요청이 많아요. 잠시 후 다시 시도해 주세요.":"검색에 실패했어요 ("+r.status+")");
+  const j=await r.json();
+  return (j.items||[]).map(i=>{const v=i.volumeInfo||{},im=v.imageLinks||{};
+    const c=(im.thumbnail||im.smallThumbnail||"").replace(/^http:/,"https:").replace("&edge=curl","");
+    return{title:v.title||"",sub:v.subtitle||"",author:(v.authors||[]).join(", "),pub:v.publisher||"",year:(v.publishedDate||"").slice(0,4),cover:c}}).filter(x=>x.title);
+}
 function booksView(){
-  const f=`<details class="card"><summary>＋ 새 책 등록</summary><div class="g"><input id="bt" placeholder="책 제목"><input id="ba" placeholder="저자"><input id="bm" type="month" aria-label="월"><input id="bd" type="date" aria-label="모임 날짜"><input id="bp" placeholder="모임 장소 (선택)"><button class="btn" data-act="addBook">등록</button></div></details>`;
-  const l=S.books.map(b=>`<div class="bk" data-pick="${b.id}"><div><b style="font-family:'Noto Serif KR',serif">${esc(b.title)}</b><div class="meta">${esc(b.author||"")}</div></div><div class="meta" style="text-align:right">${esc(b.month||"")}</div></div>`).join("");
-  return f+`<div class="card">${l||'<div class="empty">등록된 책이 없어요.</div>'}</div>`;
+  const f=S.bf,open=S.bfOpen||S.res.length||f.title;
+  const res=S.searching?'<div class="meta">검색 중…</div>':S.res.map((x,i)=>`<div class="sr" data-act="bsel" data-i="${i}">${cov(x.cover,"sm")}<div style="min-width:0"><b>${esc(x.title)}</b><div class="meta">${esc(x.author||"저자 미상")}${x.pub?" · "+esc(x.pub):""}${x.year?" · "+esc(x.year):""}</div></div></div>`).join("");
+  const form=`<details class="card" ${open?"open":""}><summary>＋ 새 책 등록</summary><div class="g">
+  <div class="row"><input id="bq" placeholder="책 제목·저자로 검색" value="${esc(f.q||"")}"><button class="btn" data-act="bsearch">🔍 검색</button></div>${res}
+  ${f.cover?`<div class="row" style="flex-wrap:nowrap;gap:12px">${cov(f.cover,"lg")}<div class="meta" style="flex:1">선택한 책의 표지가 함께 저장돼요.</div></div>`:""}
+  <input id="bt" placeholder="책 제목" value="${esc(f.title||"")}"><input id="ba" placeholder="저자" value="${esc(f.author||"")}">
+  <input id="bm" type="month" aria-label="월" value="${esc(f.month||"")}"><input id="bd" type="date" aria-label="모임 날짜" value="${esc(f.meetDate||"")}"><input id="bp" placeholder="모임 장소 (선택)" value="${esc(f.place||"")}">
+  <button class="btn" data-act="addBook">등록</button></div></details>`;
+  const l=S.books.map(b=>`<div class="bk" data-pick="${b.id}"><div style="display:flex;gap:10px;align-items:center;min-width:0">${cov(b.cover,"sm")}<div><b style="font-family:'Noto Serif KR',serif">${esc(b.title)}</b><div class="meta">${esc(b.author||"")}</div></div></div><div class="meta" style="text-align:right">${esc(b.month||"")}</div></div>`).join("");
+  return form+`<div class="card">${l||'<div class="empty">등록된 책이 없어요.</div>'}</div>`;
 }
 const stat=u=>({r:S.entries.filter(e=>e.uid===u&&e.type==="review").length,p:S.entries.filter(e=>e.uid===u&&e.type==="prompt").length,a:S.att.filter(x=>x.uid===u&&x.status==="y").length});
 function membersView(){
@@ -166,7 +197,7 @@ function shareCard(){return `<div class="card"><div class="lbl">INVITE · 친구
 /* ---------- 인쇄 ---------- */
 const PCSS=".pr{font:13px/1.7 'Noto Serif KR',Georgia,serif;color:#111;max-width:720px;margin:0 auto;padding:12px}.pr h1{font-size:20px;letter-spacing:.2em;text-align:center;margin:0;border-bottom:2px solid #8e2a2a;padding-bottom:8px}.pr h2{font-size:15px;margin:18px 0 6px;color:#8e2a2a}.pr .m{color:#555;font-size:12px}.pr table{width:100%;border-collapse:collapse}.pr th,.pr td{border:1px solid #bbb;padding:6px 8px;text-align:left}.pr .e{margin:8px 0;padding-bottom:8px;border-bottom:1px dotted #bbb;page-break-inside:avoid}.pr p{margin:2px 0;white-space:pre-wrap}";
 const _st=document.createElement("style");_st.textContent=PCSS+"#print{display:none}@media print{.wrap,#toast{display:none!important}#print{display:block!important}html,body{background:#fff!important}}";document.head.appendChild(_st);
-function printBtns(mode){return `<div class="card"><div class="lbl">${mode==="review"||mode==="prompt"?"전체 일괄 인쇄 · 저장":"인쇄 · 저장"}</div><div class="row" style="margin-top:10px"><button class="btn" data-act="print" data-mode="${mode}">🖨 인쇄하기</button><button class="btn ghost" data-act="save" data-mode="${mode}">파일로 저장</button></div></div>`}
+function printBtns(mode){return `<div class="card"><div class="lbl">${mode==="review"||mode==="prompt"?"전체 일괄 인쇄 · 저장":mode==="book"?"이 책 전체 리포트 (출석+발제문+독후감)":"인쇄 · 저장"}</div><div class="row" style="margin-top:10px"><button class="btn" data-act="print" data-mode="${mode}">🖨 인쇄하기</button><button class="btn ghost" data-act="save" data-mode="${mode}">파일로 저장</button></div></div>`}
 function entPrint(mode){
   const one=mode.startsWith("one:"),e1=one&&S.entries.find(x=>x.id===mode.slice(4));
   if(one&&!e1)return"";
@@ -190,11 +221,15 @@ function printHTML(mode){
   return `<div class="pr"><h1>JOYLUCK CLUB</h1><div class="m" style="text-align:center;margin-top:4px">${today} 출력</div>${body}</div>`;
 }
 /* ---------- 이벤트 ---------- */
-document.addEventListener("input",e=>{const m=/^txt-(\w+)$/.exec(e.target.id||"");if(m)S.draft[m[1]]=e.target.value});
+const BF={bq:"q",bt:"title",ba:"author",bm:"month",bd:"meetDate",bp:"place"};
+document.addEventListener("input",e=>{const m=/^txt-(\w+)$/.exec(e.target.id||"");if(m)S.draft[m[1]]=e.target.value;if(BF[e.target.id])S.bf[BF[e.target.id]]=e.target.value});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="bq"){e.preventDefault();document.querySelector("[data-act=bsearch]").click()}});
 document.addEventListener("change",e=>{if(e.target.id==="pick"){S.cur=e.target.value;render()}if(e.target.id==="rate")S.rating=+e.target.value});
 document.addEventListener("click",async e=>{
-  const el=e.target.closest("[data-tab],[data-act],[data-pick]");if(!el)return;
+  const el=e.target.closest("[data-tab],[data-act],[data-pick],[data-seg],[data-goto]");if(!el)return;
   if(el.dataset.tab){S.tab=el.dataset.tab;render();return}
+  if(el.dataset.seg){S.seg=el.dataset.seg;render();return}
+  if(el.dataset.goto){S.tab="log";S.seg=el.dataset.goto;render();window.scrollTo(0,0);return}
   if(el.dataset.pick){S.cur=el.dataset.pick;S.tab="home";render();return}
   const act=el.dataset.act,b=book();
   if(act==="login"){
@@ -218,8 +253,14 @@ document.addEventListener("click",async e=>{
     if(await write({op:"entry",bookId:b.id,type:t,text:v,rating:t==="review"?S.rating:null})){S.draft[t]="";render();toast("등록했어요")}}
   if(act==="del"&&confirm("삭제할까요?"))await write({op:"del",id:el.dataset.id});
   if(act==="saveSch"&&b){if(await write({op:"sched",id:b.id,meetDate:$("#sd").value,place:$("#sp").value.trim()}))toast("일정을 저장했어요")}
-  if(act==="addBook"){const v=i=>$("#"+i).value.trim();if(!v("bt")){toast("책 제목을 입력해 주세요");return}
-    try{const r=await api({op:"book",uid:S.uid,title:v("bt"),author:v("ba"),month:v("bm"),meetDate:v("bd"),place:v("bp")});S.cur=r.id;S.tab="home";await load();toast("책을 등록했어요")}catch(er){toast(er.message)}}
+  if(act==="bsearch"){const q=(S.bf.q||"").trim();if(!q){toast("검색어를 입력해 주세요");return}
+    S.bfOpen=true;S.searching=true;S.res=[];render();
+    try{S.res=await searchBooks(q);if(!S.res.length)toast("검색 결과가 없어요. 직접 입력해 주세요")}catch(er){toast(er.message)}
+    S.searching=false;render();return}
+  if(act==="bsel"){const x=S.res[+el.dataset.i];if(x){Object.assign(S.bf,{title:x.title+(x.sub?": "+x.sub:""),author:x.author,cover:x.cover});S.res=[];S.bfOpen=true;render()}return}
+  if(act==="addBook"){const f=S.bf;if(!(f.title||"").trim()){toast("책 제목을 입력해 주세요");return}
+    try{const r=await api({op:"book",uid:S.uid,title:f.title.trim(),author:(f.author||"").trim(),month:f.month||"",meetDate:f.meetDate||"",place:(f.place||"").trim(),cover:f.cover||""});
+      S.bf={};S.bfOpen=false;S.res=[];S.cur=r.id;S.tab="home";await load();toast("책을 등록했어요")}catch(er){toast(er.message)}}
 });
 /* ---------- 시작 ---------- */
 (async()=>{
