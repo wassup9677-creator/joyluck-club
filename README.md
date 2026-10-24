@@ -24,3 +24,9 @@
 ## 참고
 - 초대 코드를 아는 사람은 누구나 입장할 수 있습니다. 코드가 새어 나가면 `CLUB_CODE`를 바꾸고 Redeploy 하세요.
 - 로그인이 없어서 이름은 본인이 정하는 별명이며, 같은 기기·브라우저에서만 내 글로 인식됩니다.
+
+## 책 검색 (알라딘)
+알라딘 OpenAPI의 **TTBKey**를 환경변수 `ALADIN_TTB_KEY`로 넣으면 알라딘에서 책과 표지를 검색합니다.
+- 가입: https://www.aladin.co.kr/ttb/wjoinus.aspx → 키 확인: https://www.aladin.co.kr/ttb/wblog_manage.aspx
+- 키가 없으면 Google Books로 검색합니다.
+- 키는 서버에서만 사용되어 화면에 노출되지 않습니다. (하루 5,000회 제한)

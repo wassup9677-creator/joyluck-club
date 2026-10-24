@@ -90,7 +90,7 @@ details summary{cursor:pointer;color:var(--red);font-weight:700}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const ls={get:k=>{try{return localStorage.getItem(k)}catch(_){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}}};
-const S={books:[],entries:[],att:[],members:[],uid:ls.get("jl_uid"),name:ls.get("jl_name")||"",code:ls.get("jl_code")||"",cur:null,tab:"home",draft:{},ready:false,auth:false,rating:5,seg:"review",pics:{review:[],prompt:[]},ed:null,err:"",bf:{},res:[],bfOpen:false,searching:false};
+const S={books:[],entries:[],att:[],members:[],uid:ls.get("jl_uid"),name:ls.get("jl_name")||"",code:ls.get("jl_code")||"",cur:null,tab:"home",draft:{},ready:false,auth:false,rating:5,seg:"review",pics:{review:[],prompt:[]},ed:null,err:"",bf:{},bfEdit:null,src:"",res:[],bfOpen:false,searching:false};
 if(!S.uid){S.uid="u"+Math.random().toString(36).slice(2,10)+Date.now().toString(36);ls.set("jl_uid",S.uid)}
 const hm=/code=([^&]+)/.exec(location.hash);
 if(hm){try{S.code=decodeURIComponent(hm[1])}catch(_){S.code=hm[1]}ls.set("jl_code",S.code);history.replaceState(null,"",location.pathname)}
@@ -103,8 +103,8 @@ const fmt=d=>{if(!d)return"";const x=new Date(d+"T00:00:00");return x.getFullYea
 const ent=(b,t)=>S.entries.filter(e=>e.bookId===b.id&&e.type===t).sort((a,c)=>c.ts-a.ts);
 const sortBooks=()=>S.books.sort((a,b)=>(b.month||"").localeCompare(a.month||"")||b.ts-a.ts);
 
-async function api(body){
-  const r=await fetch("/api/db",{method:body?"POST":"GET",headers:{"Content-Type":"application/json","x-club-code":encodeURIComponent(S.code)},body:body?JSON.stringify(body):undefined});
+async function api(body,qs){
+  const r=await fetch("/api/db"+(qs||""),{method:body?"POST":"GET",headers:{"Content-Type":"application/json","x-club-code":encodeURIComponent(S.code)},body:body?JSON.stringify(body):undefined});
   const j=await r.json().catch(()=>({}));
   if(!r.ok){const e=new Error(j.error||"요청에 실패했어요");e.status=r.status;throw e}
   return j;
@@ -159,7 +159,7 @@ function logView(b){
   const nr=ent(b,"review").length,np=ent(b,"prompt").length;
   return `<div class="seg"><button data-seg="review" class="${S.seg==="review"?"on":""}">독후감 ${nr}</button><button data-seg="prompt" class="${S.seg==="prompt"?"on":""}">발제문 ${np}</button></div>`+entries(b,S.seg)+printBtns("book");
 }
-const pimgs=e=>(e.imgs||[]).map(id=>`<img src="${location.origin}/api/img?id=${id}" alt="">`).join("");
+const pimgs=e=>(e.imgs||[]).map(id=>`<img src="${location.origin}/api/db?img=${id}" alt="">`).join("");
 const thumbs=(arr,w)=>arr.length?`<div class="imgs">${arr.map((x,i)=>`<div class="th"><img src="${esc(x.url)}" alt=""><button class="xb" data-act="rmimg" data-w="${w}" data-i="${i}" aria-label="사진 삭제">✕</button></div>`).join("")}</div>`:"";
 const picBtn=id=>`<label class="btn ghost" style="display:block;text-align:center;cursor:pointer">📷 사진 추가 (최대 3장)<input id="${id}" type="file" accept="image/*" multiple hidden></label>`;
 const rateSel=(id,cur)=>`<select id="${id}" aria-label="별점">${[5,4,3,2,1].map(n=>`<option value="${n}" ${cur==n?"selected":""}>${"★".repeat(n)}${"☆".repeat(5-n)}</option>`).join("")}</select>`;
@@ -172,7 +172,7 @@ function entries(b,t){
   <button class="btn" data-act="post" data-type="${t}">등록</button></div></div>`;
   const items=list.map(e=>{
     if(S.ed&&S.ed.id===e.id)return `<div class="card ent"><div class="lbl">글 수정</div><div class="g">${e.type==="review"?rateSel("ed-rate",S.ed.rating):""}<textarea id="ed-txt" maxlength="5000">${esc(S.ed.text)}</textarea>${thumbs(S.ed.pics,"ed")}${picBtn("pic-ed")}<div class="row"><button class="btn" data-act="edsave">저장</button><button class="btn ghost" data-act="edcancel">취소</button></div></div></div>`;
-    return `<div class="card ent"><div class="who"><b>${esc(nm(e.uid))}</b><span>${e.type==="review"&&e.rating?`<span class="star">${"★".repeat(e.rating)}${"☆".repeat(5-e.rating)}</span> `:""}${new Date(e.ts).toLocaleDateString("ko-KR")}${e.edited?" (수정됨)":""} <button class="x" data-act="print" data-mode="one:${e.id}">인쇄</button>${e.uid===S.uid?` <button class="x" data-act="edstart" data-id="${e.id}">수정</button> <button class="x" data-act="del" data-id="${e.id}">삭제</button>`:""}</span></div><p>${esc(e.text)}</p>${(e.imgs||[]).length?`<div class="imgs">${e.imgs.map(id=>`<img class="eimg" data-zoom="${id}" src="/api/img?id=${id}" loading="lazy" alt="">`).join("")}</div>`:""}</div>`}).join("");
+    return `<div class="card ent"><div class="who"><b>${esc(nm(e.uid))}</b><span>${e.type==="review"&&e.rating?`<span class="star">${"★".repeat(e.rating)}${"☆".repeat(5-e.rating)}</span> `:""}${new Date(e.ts).toLocaleDateString("ko-KR")}${e.edited?" (수정됨)":""} <button class="x" data-act="print" data-mode="one:${e.id}">인쇄</button>${e.uid===S.uid?` <button class="x" data-act="edstart" data-id="${e.id}">수정</button> <button class="x" data-act="del" data-id="${e.id}">삭제</button>`:""}</span></div><p>${esc(e.text)}</p>${(e.imgs||[]).length?`<div class="imgs">${e.imgs.map(id=>`<img class="eimg" onerror="this.style.opacity=.25" data-zoom="${id}" src="/api/db?img=${id}" loading="lazy" alt="">`).join("")}</div>`:""}</div>`}).join("");
   return form+(list.length?printBtns(t):"")+(items||`<div class="empty">아직 ${isR?"독후감이":"발제문이"} 없어요. 첫 기록을 남겨 보세요.</div>`);
 }
 function fileToJpeg(file){return new Promise((res,rej)=>{const img=new Image(),u=URL.createObjectURL(file);
@@ -188,7 +188,14 @@ async function addFiles(arr,files){
 }
 async function uploadPics(arr){const ids=[];for(const x of arr){if(x.id)ids.push(x.id);else ids.push((await api({op:"img",uid:S.uid,data:x.url})).id)}return ids}
 const cov=(u,c="")=>u?`<img class="cv ${c}" src="${esc(u)}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.visibility='hidden'">`:`<div class="cv ${c} ph">📖</div>`;
+const cleanAuthor=a=>String(a||"").replace(/\s*\([^)]*\)/g,"").replace(/\s*,\s*/g,", ").trim();
 async function searchBooks(q){
+  try{
+    const j=await api(null,"?q="+encodeURIComponent(q));
+    S.src="aladin";
+    return (j.items||[]).map(i=>({title:i.title,sub:"",author:cleanAuthor(i.author),pub:i.pub,year:i.year,cover:i.cover})).filter(x=>x.title);
+  }catch(e){if(e.status!==501&&e.status!==502)throw e}
+  S.src="google";
   const r=await fetch("https://www.googleapis.com/books/v1/volumes?maxResults=8&printType=books&q="+encodeURIComponent(q));
   if(!r.ok)throw new Error(r.status===429?"검색 요청이 많아요. 잠시 후 다시 시도해 주세요.":"검색에 실패했어요 ("+r.status+")");
   const j=await r.json();
@@ -197,15 +204,17 @@ async function searchBooks(q){
     return{title:v.title||"",sub:v.subtitle||"",author:(v.authors||[]).join(", "),pub:v.publisher||"",year:(v.publishedDate||"").slice(0,4),cover:c}}).filter(x=>x.title);
 }
 function booksView(){
-  const f=S.bf,open=S.bfOpen||S.res.length||f.title;
+  const f=S.bf,ed=S.bfEdit,eb=ed&&S.books.find(x=>x.id===ed),open=S.bfOpen||S.res.length||f.title||ed;
   const res=S.searching?'<div class="meta">검색 중…</div>':S.res.map((x,i)=>`<div class="sr" data-act="bsel" data-i="${i}">${cov(x.cover,"sm")}<div style="min-width:0"><b>${esc(x.title)}</b><div class="meta">${esc(x.author||"저자 미상")}${x.pub?" · "+esc(x.pub):""}${x.year?" · "+esc(x.year):""}</div></div></div>`).join("");
-  const form=`<details class="card" ${open?"open":""}><summary>＋ 새 책 등록</summary><div class="g">
-  <div class="row"><input id="bq" placeholder="책 제목·저자로 검색" value="${esc(f.q||"")}"><button class="btn" data-act="bsearch">🔍 검색</button></div>${res}
-  ${f.cover?`<div class="row" style="flex-wrap:nowrap;gap:12px">${cov(f.cover,"lg")}<div class="meta" style="flex:1">선택한 책의 표지가 함께 저장돼요.</div></div>`:""}
+  const credit=S.src?`<div class="meta">${S.src==="aladin"?'도서 정보 제공: <a href="https://www.aladin.co.kr" target="_blank" rel="noopener" style="color:var(--red)">알라딘 인터넷서점</a>':"도서 정보 제공: Google Books"}</div>`:"";
+  const btns=ed?`<div class="row"><button class="btn" data-act="bsave">저장</button><button class="btn ghost" data-act="bcancel">취소</button>${eb&&eb.uid===S.uid?'<button class="btn ghost" data-act="bdel" style="color:var(--red)">삭제</button>':""}</div>`:'<button class="btn" data-act="addBook">등록</button>';
+  const form=`<details class="card" ${open?"open":""}><summary>${ed?"✏️ 책 수정":"＋ 새 책 등록"}</summary><div class="g">
+  <div class="row"><input id="bq" placeholder="책 제목·저자로 검색" value="${esc(f.q||"")}"><button class="btn" data-act="bsearch">🔍 검색</button></div>${res}${credit}
+  ${f.cover?`<div class="row" style="flex-wrap:nowrap;gap:12px;align-items:flex-end">${cov(f.cover,"lg")}<button class="btn ghost" data-act="bnocover" style="flex:none">표지 지우기</button></div>`:""}
   <input id="bt" placeholder="책 제목" value="${esc(f.title||"")}"><input id="ba" placeholder="저자" value="${esc(f.author||"")}">
   <input id="bm" type="month" aria-label="월" value="${esc(f.month||"")}"><input id="bd" type="date" aria-label="모임 날짜" value="${esc(f.meetDate||"")}"><input id="bp" placeholder="모임 장소 (선택)" value="${esc(f.place||"")}">
-  <button class="btn" data-act="addBook">등록</button></div></details>`;
-  const l=S.books.map(b=>`<div class="bk" data-pick="${b.id}"><div style="display:flex;gap:10px;align-items:center;min-width:0">${cov(b.cover,"sm")}<div><b style="font-family:'Noto Serif KR',serif">${esc(b.title)}</b><div class="meta">${esc(b.author||"")}</div></div></div><div class="meta" style="text-align:right">${esc(b.month||"")}</div></div>`).join("");
+  ${btns}</div></details>`;
+  const l=S.books.map(b=>`<div class="bk" data-pick="${b.id}"><div style="display:flex;gap:10px;align-items:center;min-width:0">${cov(b.cover,"sm")}<div><b style="font-family:'Noto Serif KR',serif">${esc(b.title)}</b><div class="meta">${esc(b.author||"")}</div></div></div><div style="text-align:right"><div class="meta">${esc(b.month||"")}</div><button class="x" data-act="bedit" data-id="${b.id}">수정</button></div></div>`).join("");
   return form+`<div class="card">${l||'<div class="empty">등록된 책이 없어요.</div>'}</div>`;
 }
 const stat=u=>({r:S.entries.filter(e=>e.uid===u&&e.type==="review").length,p:S.entries.filter(e=>e.uid===u&&e.type==="prompt").length,a:S.att.filter(x=>x.uid===u&&x.status==="y").length});
@@ -258,7 +267,7 @@ $("#lb").addEventListener("click",()=>{$("#lb").style.display="none"});
 document.addEventListener("click",async e=>{
   const el=e.target.closest("[data-tab],[data-act],[data-pick],[data-seg],[data-goto],[data-zoom]");if(!el)return;
   if(el.dataset.tab){S.tab=el.dataset.tab;render();return}
-  if(el.dataset.zoom){$("#lb").innerHTML='<img src="/api/img?id='+el.dataset.zoom+'" alt="">';$("#lb").style.display="flex";return}
+  if(el.dataset.zoom){$("#lb").innerHTML='<img src="/api/db?img='+el.dataset.zoom+'" alt="">';$("#lb").style.display="flex";return}
   if(el.dataset.seg){S.seg=el.dataset.seg;render();return}
   if(el.dataset.goto){S.tab="log";S.seg=el.dataset.goto;render();window.scrollTo(0,0);return}
   if(el.dataset.pick){S.cur=el.dataset.pick;S.tab="home";render();return}
@@ -280,7 +289,7 @@ document.addEventListener("click",async e=>{
     return;
   }
   if(act==="att"&&b)await write({op:"att",bookId:b.id,status:el.dataset.s});
-  if(act==="edstart"){const e=S.entries.find(x=>x.id===el.dataset.id);if(e){S.ed={id:e.id,text:e.text,rating:e.rating||5,pics:(e.imgs||[]).map(id=>({id,url:"/api/img?id="+id}))};render()}return}
+  if(act==="edstart"){const e=S.entries.find(x=>x.id===el.dataset.id);if(e){S.ed={id:e.id,text:e.text,rating:e.rating||5,pics:(e.imgs||[]).map(id=>({id,url:"/api/db?img="+id}))};render()}return}
   if(act==="edcancel"){S.ed=null;render();return}
   if(act==="rmimg"){const arr=el.dataset.w==="ed"?(S.ed&&S.ed.pics):S.pics[el.dataset.w];if(arr){arr.splice(+el.dataset.i,1);render()}return}
   if(act==="edsave"&&S.ed){const v=S.ed.text.trim();if(!v){toast("내용을 입력해 주세요");return}
@@ -289,6 +298,14 @@ document.addEventListener("click",async e=>{
     try{toast("등록 중…");const ids=await uploadPics(S.pics[t]);await api({op:"entry",uid:S.uid,bookId:b.id,type:t,text:v,rating:t==="review"?S.rating:null,imgs:ids});S.draft[t]="";S.pics[t]=[];await load();toast("등록했어요")}catch(er){toast(er.message)}return}
   if(act==="del"&&confirm("삭제할까요?"))await write({op:"del",id:el.dataset.id});
   if(act==="saveSch"&&b){if(await write({op:"sched",id:b.id,meetDate:$("#sd").value,place:$("#sp").value.trim()}))toast("일정을 저장했어요")}
+  if(act==="bedit"){const x=S.books.find(y=>y.id===el.dataset.id);if(x){S.bfEdit=x.id;S.bf={q:"",title:x.title,author:x.author||"",month:x.month||"",meetDate:x.meetDate||"",place:x.place||"",cover:x.cover||""};S.res=[];S.bfOpen=true;render();window.scrollTo(0,0)}return}
+  if(act==="bcancel"){S.bfEdit=null;S.bf={};S.res=[];S.bfOpen=false;render();return}
+  if(act==="bnocover"){S.bf.cover="";render();return}
+  if(act==="bsave"&&S.bfEdit){const f=S.bf;if(!(f.title||"").trim()){toast("책 제목을 입력해 주세요");return}
+    try{await api({op:"bedit",uid:S.uid,id:S.bfEdit,title:f.title.trim(),author:(f.author||"").trim(),month:f.month||"",meetDate:f.meetDate||"",place:(f.place||"").trim(),cover:f.cover||""});
+      S.bfEdit=null;S.bf={};S.res=[];S.bfOpen=false;await load();toast("책 정보를 수정했어요")}catch(er){toast(er.message)}return}
+  if(act==="bdel"&&S.bfEdit){if(!confirm("이 책의 독후감·발제문·출석 기록도 모두 삭제돼요. 삭제할까요?"))return;
+    try{await api({op:"bdel",uid:S.uid,id:S.bfEdit});if(S.cur===S.bfEdit)S.cur=null;S.bfEdit=null;S.bf={};S.res=[];S.bfOpen=false;await load();toast("책을 삭제했어요")}catch(er){toast(er.message)}return}
   if(act==="bsearch"){const q=(S.bf.q||"").trim();if(!q){toast("검색어를 입력해 주세요");return}
     S.bfOpen=true;S.searching=true;S.res=[];render();
     try{S.res=await searchBooks(q);if(!S.res.length)toast("검색 결과가 없어요. 직접 입력해 주세요")}catch(er){toast(er.message)}
