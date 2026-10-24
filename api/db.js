@@ -1,6 +1,7 @@
 // JOYLUCK CLUB API — Vercel Serverless Function (Node) + Upstash Redis (REST)
 // 환경변수 이름에 접두사가 붙어 있어도(예: STORAGE_KV_REST_API_URL) 자동으로 찾습니다.
 const pick = (re) => { const k = Object.keys(process.env).find((n) => re.test(n) && process.env[n]); return k ? process.env[k] : undefined; };
+const crypto = require("crypto");
 const URL_ = pick(/(^|_)(KV_REST_API_URL|UPSTASH_REDIS_REST_URL)$/);
 const TOK = pick(/(^|_)(KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN)$/);
 const CODE = (process.env.CLUB_CODE || "").trim();
@@ -21,6 +22,7 @@ async function hall(k) {
 }
 const s = (v, n) => String(v == null ? "" : v).slice(0, n);
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const imgIds = (a) => (Array.isArray(a) ? a.filter((x) => /^[a-f0-9]{24}$/.test(x)).slice(0, 3) : []);
 const dateOk = (d) => d === "" || /^\d{4}-\d{2}-\d{2}$/.test(d);
 
 module.exports = async (req, res) => {
@@ -78,14 +80,38 @@ module.exports = async (req, res) => {
         if (!(await r(["HEXISTS", "jl:books", s(b.bookId, 40)]))) return res.status(404).json({ error: "책을 찾을 수 없어요" });
         const rating = type === "review" ? Math.min(5, Math.max(1, parseInt(b.rating, 10) || 5)) : null;
         id = newId();
-        await r(["HSET", "jl:entries", id, JSON.stringify({ id, bookId: s(b.bookId, 40), type, text, rating, uid, ts: Date.now() })]);
+        await r(["HSET", "jl:entries", id, JSON.stringify({ id, bookId: s(b.bookId, 40), type, text, rating, imgs: imgIds(b.imgs), uid, ts: Date.now() })]);
         break;
       }
       case "del": {
         const raw = await r(["HGET", "jl:entries", s(b.id, 40)]);
         if (!raw) break;
-        if (JSON.parse(raw).uid !== uid) return res.status(403).json({ error: "내 글만 삭제할 수 있어요" });
+        const e0 = JSON.parse(raw);
+        if (e0.uid !== uid) return res.status(403).json({ error: "내 글만 삭제할 수 있어요" });
+        for (const m of e0.imgs || []) await r(["HDEL", "jl:imgs", m]);
         await r(["HDEL", "jl:entries", s(b.id, 40)]);
+        break;
+      }
+      case "img": {
+        const d = String(b.data || "");
+        if (d.length > 650000 || !/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(d))
+          return res.status(400).json({ error: "사진 형식이나 크기가 올바르지 않아요" });
+        id = crypto.randomBytes(12).toString("hex");
+        await r(["HSET", "jl:imgs", id, d]);
+        break;
+      }
+      case "edit": {
+        const raw = await r(["HGET", "jl:entries", s(b.id, 40)]);
+        if (!raw) return res.status(404).json({ error: "글을 찾을 수 없어요" });
+        const e = JSON.parse(raw);
+        if (e.uid !== uid) return res.status(403).json({ error: "내 글만 수정할 수 있어요" });
+        const text = s(b.text, 5000).trim();
+        if (!text) return res.status(400).json({ error: "내용을 입력해 주세요" });
+        const imgs = imgIds(b.imgs);
+        for (const old of e.imgs || []) if (!imgs.includes(old)) await r(["HDEL", "jl:imgs", old]);
+        e.text = text; e.imgs = imgs; e.edited = Date.now();
+        if (e.type === "review") e.rating = Math.min(5, Math.max(1, parseInt(b.rating, 10) || e.rating || 5));
+        await r(["HSET", "jl:entries", e.id, JSON.stringify(e)]);
         break;
       }
       case "att": {
