@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JOYLUCK CLUB | 독서기록</title>
+<meta name="description" content="함께 읽고, 기록하고, 나누는 독서모임 JOYLUCK CLUB">
+<meta property="og:type" content="website">
+<meta property="og:title" content="JOYLUCK CLUB | 독서기록">
+<meta property="og:description" content="이달의 책, 독후감, 발제문, 출석을 함께 기록해요. 가입 없이 바로 입장!">
+<meta name="theme-color" content="#8e2a2a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6efe4;--card:#fffaf1;--ink:#241915;--mute:#7a6a5f;--line:#e4d7c4;--red:#8e2a2a;--gold:#b58a3c;--jade:#2f5d50;--on-red:#fff6ea;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171110;--card:#221918;--ink:#f2e8da;--mute:#a8978a;--line:#392b28;--red:#c75a52;--gold:#d3a85a;--jade:#6aa593;--on-red:#1a1210;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#171110;--card:#221918;--ink:#f2e8da;--mute:#a8978a;--line:#392b28;--red:#c75a52;--gold:#d3a85a;--jade:#6aa593;--on-red:#1a1210;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 "Noto Sans KR",system-ui,sans-serif}
+.wrap{max-width:640px;margin:0 auto;padding:20px 16px 80px}
+header{text-align:center;padding:18px 0 8px}
+.mark{display:inline-grid;grid-template-columns:repeat(2,9px);gap:3px;margin-bottom:10px}
+.mark i{width:9px;height:9px;background:var(--red);display:block}
+.mark i:nth-child(2),.mark i:nth-child(3){background:var(--gold)}
+h1{font:700 22px "Noto Serif KR",serif;letter-spacing:.22em;margin:0}
+.sub{color:var(--mute);font-size:12px;letter-spacing:.08em;margin-top:2px}
+nav{display:flex;gap:4px;margin:18px 0 14px;border-bottom:1px solid var(--line);overflow-x:auto}
+nav button{flex:1;background:none;border:0;border-bottom:2px solid transparent;padding:10px 6px;font:500 14px inherit;font-family:inherit;color:var(--mute);cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--red);border-color:var(--red);font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+.lbl{font-size:11px;letter-spacing:.14em;color:var(--gold);font-weight:700;text-transform:uppercase}
+.bt{font:700 22px/1.35 "Noto Serif KR",serif;margin:4px 0 2px}
+.meta{color:var(--mute);font-size:13px}
+.dd{display:inline-block;background:var(--red);color:var(--on-red);border-radius:999px;padding:1px 10px;font-size:12px;font-weight:700;margin-left:6px}
+select,input,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+textarea{min-height:96px;resize:vertical}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--gold);outline-offset:0}
+.btn{background:var(--red);color:var(--on-red);border:0;border-radius:8px;padding:9px 16px;font:700 14px inherit;font-family:inherit;cursor:pointer}
+.btn.ghost{background:none;color:var(--mute);border:1px solid var(--line);font-weight:500}
+.btn.on{background:var(--jade);color:var(--on-red)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row>*{flex:1}.row>.btn{flex:none}
+.ent .who{display:flex;justify-content:space-between;font-size:13px;color:var(--mute);margin-bottom:6px}
+.ent .who b{color:var(--ink)}
+.ent p{margin:0;white-space:pre-wrap;word-break:break-word;font-family:"Noto Serif KR",serif}
+.star{color:var(--gold);letter-spacing:2px}
+.x{background:none;border:0;color:var(--mute);cursor:pointer;font-size:12px;text-decoration:underline}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:2px 11px;font-size:13px}
+.chip.y{border-color:var(--jade);color:var(--jade)}.chip.n{color:var(--mute)}
+.mem{display:flex;justify-content:space-between;align-items:center;gap:10px}.mem b{font-family:"Noto Serif KR",serif}
+.sch{display:flex;gap:14px;align-items:center;background:var(--red);color:var(--on-red);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.sch .lbl,.sch .meta{color:var(--on-red);opacity:.88}
+.sch .dd{background:var(--on-red);color:var(--red);opacity:1}
+.sch .sd{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:64px;border-right:1px solid rgba(255,246,234,.4);padding-right:14px;line-height:1.25}
+.sch .sd b{font:700 32px/1.1 "Noto Serif KR",serif}.sch .sd small{font-size:12px}
+.sch.off{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.sch.off .lbl{color:var(--gold)}.sch.off .meta{color:var(--mute)}.sch.off .dd{background:var(--mute);color:var(--card)}.sch.off .sd{border-color:var(--line)}
+.empty{text-align:center;color:var(--mute);padding:26px 0;font-size:14px}
+details summary{cursor:pointer;color:var(--red);font-weight:700}
+.g{display:grid;gap:8px;margin-top:10px}
+.bk{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.bk:first-child{border-top:0}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:13px;display:none}
+.cv{width:64px;height:92px;object-fit:cover;border-radius:4px;border:1px solid var(--line);flex:none;background:var(--bg)}
+.cv.sm{width:40px;height:58px}.cv.lg{width:96px;height:138px;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.cv.ph{display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--mute)}
+.sr{display:flex;gap:10px;padding:8px;border:1px solid var(--line);border-radius:8px;cursor:pointer;align-items:center}.sr:hover{border-color:var(--gold)}
+.sr b{font-family:"Noto Serif KR",serif;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="mark"><i></i><i></i><i></i><i></i></div><h1>JOYLUCK CLUB</h1><div class="sub">함께 읽고, 기록하고, 나누는 독서모임</div></header>
+<nav id="nav"></nav>
+<main id="app"><div class="empty">불러오는 중…</div></main>
+</div>
+<div id="toast"></div>
+<div id="print"></div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const ls={get:k=>{try{return localStorage.getItem(k)}catch(_){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}}};
+const S={books:[],entries:[],att:[],members:[],uid:ls.get("jl_uid"),name:ls.get("jl_name")||"",code:ls.get("jl_code")||"",cur:null,tab:"home",draft:{},ready:false,auth:false,rating:5,err:"",bf:{},res:[],bfOpen:false,searching:false};
+if(!S.uid){S.uid="u"+Math.random().toString(36).slice(2,10)+Date.now().toString(36);ls.set("jl_uid",S.uid)}
+const hm=/code=([^&]+)/.exec(location.hash);
+if(hm){try{S.code=decodeURIComponent(hm[1])}catch(_){S.code=hm[1]}ls.set("jl_code",S.code);history.replaceState(null,"",location.pathname)}
+const TABS=[["home","이달의 책"],["review","독후감"],["prompt","발제문"],["books","책 목록"],["members","멤버"]];
+function toast(m){const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display="none",2400)}
+const nm=u=>{const m=S.members.find(x=>x.uid===u);return m?m.name:"멤버"};
+const book=()=>S.books.find(b=>b.id===S.cur)||S.books[0];
+function dday(d){if(!d)return"";const n=Math.round((new Date(d+"T00:00:00")-new Date(new Date().toDateString()))/864e5);return n===0?"D-DAY":n>0?"D-"+n:"D+"+(-n)}
+const fmt=d=>{if(!d)return"";const x=new Date(d+"T00:00:00");return x.getFullYear()+"년 "+(x.getMonth()+1)+"월 "+x.getDate()+"일"};
+const ent=(b,t)=>S.entries.filter(e=>e.bookId===b.id&&e.type===t).sort((a,c)=>c.ts-a.ts);
+const sortBooks=()=>S.books.sort((a,b)=>(b.month||"").localeCompare(a.month||"")||b.ts-a.ts);
+
+async function api(body){
+  const r=await fetch("/api/db",{method:body?"POST":"GET",headers:{"Content-Type":"application/json","x-club-code":encodeURIComponent(S.code)},body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){const e=new Error(j.error||"요청에 실패했어요");e.status=r.status;throw e}
+  return j;
+}
+async function load(){
+  try{const d=await api();S.books=d.books;S.entries=d.entries;S.att=d.att;S.members=d.members;sortBooks();S.auth=true;S.ready=true;render()}
+  catch(e){S.ready=true;if(e.status===401){S.auth=false;S.err=S.code?e.message:""}else if(!S.auth)S.err=e.message;else toast(e.message);render()}
+}
+async function write(body){try{await api(Object.assign({uid:S.uid},body));await load();return true}catch(e){toast(e.message);return false}}
+
+function render(){
+  const a=document.activeElement,aid=a&&a.id,ss=a&&a.selectionStart;
+  $("#nav").innerHTML=S.auth?TABS.map(([k,l])=>`<button data-tab="${k}" class="${S.tab===k?"on":""}">${l}</button>`).join(""):"";
+  let h="";
+  if(!S.ready)h='<div class="empty">불러오는 중…</div>';
+  else if(!S.auth)h=loginView();
+  else{
+    const b=book();
+    if(S.tab==="books")h=booksView();
+    else if(S.tab==="members")h=membersView();
+    else if(!b)h=(S.tab==="home"?schedule():"")+'<div class="card empty">아직 등록된 책이 없어요.<br>‘책 목록’ 탭에서 첫 책을 등록해 주세요.</div>';
+    else h=(S.tab==="home"?schedule():"")+picker(b)+(S.tab==="home"?home(b):entries(b,S.tab));
+  }
+  $("#app").innerHTML=h;
+  if(aid){const e=document.getElementById(aid);if(e){e.focus();try{e.setSelectionRange(ss,ss)}catch(_){}}}
+}
+function loginView(){return `<div class="card"><div class="lbl">WELCOME</div><p class="meta" style="margin:6px 0 12px">가입 없이 초대 코드와 이름만 입력하면 바로 시작할 수 있어요.</p><div class="g"><input id="lc" placeholder="초대 코드" value="${esc(S.code)}" autocomplete="off"><input id="ln" placeholder="내 이름(별명)" maxlength="20" value="${esc(S.name)}"><button class="btn" data-act="login">입장하기</button></div><div class="meta" style="color:var(--red);margin-top:8px">${esc(S.err)}</div></div>`}
+function schedule(){
+  const t0=new Date(new Date().toDateString()),wd=["일","월","화","수","목","금","토"];
+  const L=S.books.filter(x=>x.meetDate),dt=x=>new Date(x.meetDate+"T00:00:00");
+  const up=L.filter(x=>dt(x)>=t0).sort((a,c)=>a.meetDate.localeCompare(c.meetDate));
+  const b=up[0]||L.slice().sort((a,c)=>c.meetDate.localeCompare(a.meetDate))[0],cb=book();
+  const ed=cb?`<details style="margin:-2px 0 14px"><summary style="font-size:13px">‘${esc(cb.title)}’ 모임 일정 ${cb.meetDate?"수정":"정하기"}</summary><div class="g"><input id="sd" type="date" value="${esc(cb.meetDate||"")}" aria-label="모임 날짜"><input id="sp" placeholder="모임 장소" value="${esc(cb.place||"")}"><button class="btn" data-act="saveSch">저장</button></div></details>`:"";
+  if(!b)return `<div class="sch off"><div class="sd"><b>—</b></div><div><div class="lbl">NEXT MEETING</div><div style="font-weight:700">모임 일정이 아직 없어요</div><div class="meta">${cb?"아래에서 날짜를 정해 주세요.":"책을 먼저 등록하면 날짜를 정할 수 있어요."}</div></div></div>`+ed;
+  const d=dt(b),past=d<t0;
+  return `<div class="sch ${past?"off":""}"><div class="sd"><small>${d.getFullYear()}.${d.getMonth()+1}</small><b>${d.getDate()}</b><small>${wd[d.getDay()]}요일</small></div><div data-pick="${b.id}" style="cursor:pointer;flex:1"><div class="lbl">${past?"LAST MEETING":"NEXT MEETING"}<span class="dd">${past?"종료":dday(b.meetDate)}</span></div><div style="font:700 17px/1.4 'Noto Serif KR',serif;margin-top:2px">${esc(b.title)}</div><div class="meta">${b.place?"📍 "+esc(b.place):"장소 미정"}</div></div></div>`+ed;
+}
+function picker(b){return `<select id="pick" aria-label="책 선택" style="margin-bottom:14px">${S.books.map(x=>`<option value="${x.id}" ${x.id===b.id?"selected":""}>${esc(x.month||"")} · ${esc(x.title)}</option>`).join("")}</select>`}
+function home(b){
+  const at=S.att.filter(x=>x.bookId===b.id),mine=at.find(x=>x.uid===S.uid),st=mine&&mine.status;
+  const grp=s=>at.filter(x=>x.status===s).map(x=>`<span class="chip ${s==="y"?"y":"n"}">${esc(nm(x.uid))}</span>`).join("")||'<span class="meta">없음</span>';
+  return `<div class="card" style="display:flex;gap:14px;align-items:flex-start">${b.cover?cov(b.cover,"lg"):""}<div style="flex:1;min-width:0"><div class="lbl">이달의 책 ${esc(b.month||"")}</div><div class="bt">${esc(b.title)}</div><div class="meta">${esc(b.author||"")}</div></div></div>
+  <div class="card"><div class="lbl">출석</div><div class="row" style="margin:10px 0">${[["y","참석"],["m","미정"],["n","불참"]].map(([k,l])=>`<button class="btn ${st===k?"on":"ghost"}" data-act="att" data-s="${k}" style="flex:1">${l}</button>`).join("")}</div>
+  <div class="meta">참석</div><div class="chips">${grp("y")}</div><div class="meta" style="margin-top:10px">미정</div><div class="chips">${grp("m")}</div><div class="meta" style="margin-top:10px">불참</div><div class="chips">${grp("n")}</div></div>
+  <div class="card"><div class="lbl">기록 현황</div><div style="margin-top:6px">독후감 ${ent(b,"review").length}편 · 발제문 ${ent(b,"prompt").length}개</div></div>`+shareCard()+printBtns("book");
+}
+function entries(b,t){
+  const isR=t==="review",list=ent(b,t),d=S.draft[t]||"";
+  const form=`<div class="card"><div class="lbl">${isR?"내 독후감 쓰기":"발제문 올리기"}</div><div class="g">
+  ${isR?`<select id="rate" aria-label="별점">${[5,4,3,2,1].map(n=>`<option value="${n}" ${S.rating==n?"selected":""}>${"★".repeat(n)}${"☆".repeat(5-n)}</option>`).join("")}</select>`:""}
+  <textarea id="txt-${t}" maxlength="5000" placeholder="${isR?"이 책을 읽고 느낀 점을 자유롭게 남겨 주세요.":"모임에서 함께 나누고 싶은 질문을 적어 주세요."}">${esc(d)}</textarea>
+  <button class="btn" data-act="post" data-type="${t}">등록</button></div></div>`;
+  const items=list.map(e=>`<div class="card ent"><div class="who"><b>${esc(nm(e.uid))}</b><span>${e.type==="review"&&e.rating?`<span class="star">${"★".repeat(e.rating)}${"☆".repeat(5-e.rating)}</span> `:""}${new Date(e.ts).toLocaleDateString("ko-KR")} <button class="x" data-act="print" data-mode="one:${e.id}">인쇄</button>${e.uid===S.uid?` <button class="x" data-act="del" data-id="${e.id}">삭제</button>`:""}</span></div><p>${esc(e.text)}</p></div>`).join("");
+  return form+(list.length?printBtns(t):"")+(items||`<div class="empty">아직 ${isR?"독후감이":"발제문이"} 없어요. 첫 기록을 남겨 보세요.</div>`);
+}
+const cov=(u,c="")=>u?`<img class="cv ${c}" src="${esc(u)}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.visibility='hidden'">`:`<div class="cv ${c} ph">📖</div>`;
+async function searchBooks(q){
+  const r=await fetch("https://www.googleapis.com/books/v1/volumes?maxResults=8&printType=books&q="+encodeURIComponent(q));
+  if(!r.ok)throw new Error(r.status===429?"검색 요청이 많아요. 잠시 후 다시 시도해 주세요.":"검색에 실패했어요 ("+r.status+")");
+  const j=await r.json();
+  return (j.items||[]).map(i=>{const v=i.volumeInfo||{},im=v.imageLinks||{};
+    const c=(im.thumbnail||im.smallThumbnail||"").replace(/^http:/,"https:").replace("&edge=curl","");
+    return{title:v.title||"",sub:v.subtitle||"",author:(v.authors||[]).join(", "),pub:v.publisher||"",year:(v.publishedDate||"").slice(0,4),cover:c}}).filter(x=>x.title);
+}
+function booksView(){
+  const f=S.bf,open=S.bfOpen||S.res.length||f.title;
+  const res=S.searching?'<div class="meta">검색 중…</div>':S.res.map((x,i)=>`<div class="sr" data-act="bsel" data-i="${i}">${cov(x.cover,"sm")}<div style="min-width:0"><b>${esc(x.title)}</b><div class="meta">${esc(x.author||"저자 미상")}${x.pub?" · "+esc(x.pub):""}${x.year?" · "+esc(x.year):""}</div></div></div>`).join("");
+  const form=`<details class="card" ${open?"open":""}><summary>＋ 새 책 등록</summary><div class="g">
+  <div class="row"><input id="bq" placeholder="책 제목·저자로 검색" value="${esc(f.q||"")}"><button class="btn" data-act="bsearch">🔍 검색</button></div>${res}
+  ${f.cover?`<div class="row" style="flex-wrap:nowrap;gap:12px">${cov(f.cover,"lg")}<div class="meta" style="flex:1">선택한 책의 표지가 함께 저장돼요.</div></div>`:""}
+  <input id="bt" placeholder="책 제목" value="${esc(f.title||"")}"><input id="ba" placeholder="저자" value="${esc(f.author||"")}">
+  <input id="bm" type="month" aria-label="월" value="${esc(f.month||"")}"><input id="bd" type="date" aria-label="모임 날짜" value="${esc(f.meetDate||"")}"><input id="bp" placeholder="모임 장소 (선택)" value="${esc(f.place||"")}">
+  <button class="btn" data-act="addBook">등록</button></div></details>`;
+  const l=S.books.map(b=>`<div class="bk" data-pick="${b.id}"><div style="display:flex;gap:10px;align-items:center;min-width:0">${cov(b.cover,"sm")}<div><b style="font-family:'Noto Serif KR',serif">${esc(b.title)}</b><div class="meta">${esc(b.author||"")}</div></div></div><div class="meta" style="text-align:right">${esc(b.month||"")}</div></div>`).join("");
+  return form+`<div class="card">${l||'<div class="empty">등록된 책이 없어요.</div>'}</div>`;
+}
+const stat=u=>({r:S.entries.filter(e=>e.uid===u&&e.type==="review").length,p:S.entries.filter(e=>e.uid===u&&e.type==="prompt").length,a:S.att.filter(x=>x.uid===u&&x.status==="y").length});
+function membersView(){
+  const l=S.members.slice().sort((a,b)=>a.ts-b.ts).map(m=>{const s=stat(m.uid);return `<div class="mem bk" style="cursor:default"><div><b>${esc(m.name)}</b>${m.uid===S.uid?' <span class="chip y">나</span>':""}</div><div class="meta">독후감 ${s.r} · 발제 ${s.p} · 참석 ${s.a}</div></div>`}).join("");
+  return shareCard()+`<div class="card"><div class="lbl">멤버 ${S.members.length}명</div>${l||'<div class="empty">아직 멤버가 없어요.</div>'}</div>`+printBtns("members")+`<div class="card"><button class="btn ghost" data-act="logout">이름 바꾸기 / 로그아웃</button></div>`;
+}
+/* ---------- 공유 ---------- */
+const inviteUrl=()=>location.origin+"/#code="+encodeURIComponent(S.code);
+const INVITE="📚 JOYLUCK CLUB 독서모임 기록 앱에 초대합니다! 이달의 책, 독후감, 발제문, 출석을 함께 기록해요. (가입 없이 바로 입장)";
+async function copyLink(){try{await navigator.clipboard.writeText(INVITE+"\n"+inviteUrl());toast("초대 문구와 링크를 복사했어요. 카카오톡에 붙여넣어 보내세요")}catch(_){const i=$("#lnk");if(i){i.focus();i.select()}toast("링크를 길게 눌러 복사해 주세요")}}
+function shareCard(){return `<div class="card"><div class="lbl">INVITE · 친구 초대</div><p class="meta" style="margin:6px 0 10px">링크 하나로 가입 없이 입장할 수 있어요.</p><input id="lnk" readonly value="${esc(inviteUrl())}"><div class="row" style="margin-top:10px"><button class="btn" data-act="share" style="background:#FEE500;color:#191919">💬 카카오톡으로 공유</button><button class="btn ghost" data-act="copy">링크 복사</button></div></div>`}
+/* ---------- 인쇄 ---------- */
+const PCSS=".pr{font:13px/1.7 'Noto Serif KR',Georgia,serif;color:#111;max-width:720px;margin:0 auto;padding:12px}.pr h1{font-size:20px;letter-spacing:.2em;text-align:center;margin:0;border-bottom:2px solid #8e2a2a;padding-bottom:8px}.pr h2{font-size:15px;margin:18px 0 6px;color:#8e2a2a}.pr .m{color:#555;font-size:12px}.pr table{width:100%;border-collapse:collapse}.pr th,.pr td{border:1px solid #bbb;padding:6px 8px;text-align:left}.pr .e{margin:8px 0;padding-bottom:8px;border-bottom:1px dotted #bbb;page-break-inside:avoid}.pr p{margin:2px 0;white-space:pre-wrap}";
+const _st=document.createElement("style");_st.textContent=PCSS+"#print{display:none}@media print{.wrap,#toast{display:none!important}#print{display:block!important}html,body{background:#fff!important}}";document.head.appendChild(_st);
+function printBtns(mode){return `<div class="card"><div class="lbl">${mode==="review"||mode==="prompt"?"전체 일괄 인쇄 · 저장":"인쇄 · 저장"}</div><div class="row" style="margin-top:10px"><button class="btn" data-act="print" data-mode="${mode}">🖨 인쇄하기</button><button class="btn ghost" data-act="save" data-mode="${mode}">파일로 저장</button></div></div>`}
+function entPrint(mode){
+  const one=mode.startsWith("one:"),e1=one&&S.entries.find(x=>x.id===mode.slice(4));
+  if(one&&!e1)return"";
+  const bk=one?S.books.find(x=>x.id===e1.bookId):book();if(!bk)return"";
+  const L=one?[e1]:ent(bk,mode).slice().reverse(),lab=t=>t==="review"?"독후감":"발제문";
+  const head=`<h2>${esc(bk.title)}</h2><div class="m">${esc(bk.author||"")} · ${esc(bk.month||"")}${bk.meetDate?" · "+fmt(bk.meetDate):""}</div>`;
+  const items=L.map((e,i)=>`<div class="e"><div class="m">${one?lab(e.type):(i+1)+"."} ${esc(nm(e.uid))}${e.rating?" · "+"★".repeat(e.rating)+"☆".repeat(5-e.rating):""} · ${new Date(e.ts).toLocaleDateString("ko-KR")}</div><p>${esc(e.text)}</p></div>`).join("");
+  return head+(one?"":`<h2>${lab(mode)} (${L.length})</h2>`)+(items||"-");
+}
+function printHTML(mode){
+  const today=new Date().toLocaleDateString("ko-KR");let body="";
+  if(mode==="review"||mode==="prompt"||mode.startsWith("one:")){body=entPrint(mode);if(!body)return""}
+  else if(mode==="members"){
+    body=`<h2>멤버 명단 (${S.members.length}명)</h2><table><tr><th>#</th><th>이름</th><th>독후감</th><th>발제문</th><th>참석</th><th>메모</th></tr>${S.members.map((m,i)=>{const s=stat(m.uid);return `<tr><td>${i+1}</td><td>${esc(m.name)}</td><td>${s.r}</td><td>${s.p}</td><td>${s.a}</td><td></td></tr>`}).join("")}</table>`;
+  }else{
+    const b=book();if(!b)return"";
+    const at=S.att.filter(x=>x.bookId===b.id),g=s=>at.filter(x=>x.status===s).map(x=>esc(nm(x.uid))).join(", ")||"-";
+    const rv=ent(b,"review"),pr=ent(b,"prompt");
+    body=`<h2>${esc(b.title)}</h2><div class="m">${esc(b.author||"")} · ${esc(b.month||"")}${b.meetDate?" · "+fmt(b.meetDate):""}${b.place?" · "+esc(b.place):""}</div><h2>출석</h2><div>참석: ${g("y")}</div><div>미정: ${g("m")}</div><div>불참: ${g("n")}</div><h2>발제문 (${pr.length})</h2>${pr.map((e,i)=>`<div class="e"><div class="m">${i+1}. ${esc(nm(e.uid))}</div><p>${esc(e.text)}</p></div>`).join("")||"-"}<h2>독후감 (${rv.length})</h2>${rv.map(e=>`<div class="e"><div class="m">${esc(nm(e.uid))}${e.rating?" · "+"★".repeat(e.rating)+"☆".repeat(5-e.rating):""}</div><p>${esc(e.text)}</p></div>`).join("")||"-"}`;
+  }
+  return `<div class="pr"><h1>JOYLUCK CLUB</h1><div class="m" style="text-align:center;margin-top:4px">${today} 출력</div>${body}</div>`;
+}
+/* ---------- 이벤트 ---------- */
+const BF={bq:"q",bt:"title",ba:"author",bm:"month",bd:"meetDate",bp:"place"};
+document.addEventListener("input",e=>{const m=/^txt-(\w+)$/.exec(e.target.id||"");if(m)S.draft[m[1]]=e.target.value;if(BF[e.target.id])S.bf[BF[e.target.id]]=e.target.value});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="bq"){e.preventDefault();document.querySelector("[data-act=bsearch]").click()}});
+document.addEventListener("change",e=>{if(e.target.id==="pick"){S.cur=e.target.value;render()}if(e.target.id==="rate")S.rating=+e.target.value});
+document.addEventListener("click",async e=>{
+  const el=e.target.closest("[data-tab],[data-act],[data-pick]");if(!el)return;
+  if(el.dataset.tab){S.tab=el.dataset.tab;render();return}
+  if(el.dataset.pick){S.cur=el.dataset.pick;S.tab="home";render();return}
+  const act=el.dataset.act,b=book();
+  if(act==="login"){
+    S.code=$("#lc").value.trim();S.name=$("#ln").value.trim();
+    if(!S.code||!S.name){S.err="초대 코드와 이름을 모두 입력해 주세요.";render();return}
+    try{await api({op:"join",uid:S.uid,name:S.name});ls.set("jl_code",S.code);ls.set("jl_name",S.name);S.err="";await load()}
+    catch(er){S.err=er.message;render()}
+    return;
+  }
+  if(act==="logout"){ls.set("jl_name","");S.name="";S.auth=false;render();return}
+  if(act==="share"){const d={title:"JOYLUCK CLUB",text:INVITE,url:inviteUrl()};if(navigator.share){try{await navigator.share(d)}catch(er){if(er&&er.name!=="AbortError")await copyLink()}}else await copyLink();return}
+  if(act==="copy"){await copyLink();return}
+  if(act==="print"||act==="save"){
+    const h=printHTML(el.dataset.mode);if(!h){toast("출력할 내용이 없어요");return}
+    if(act==="print"){$("#print").innerHTML=h;try{window.print()}catch(_){toast("인쇄가 막혀 있어요. ‘파일로 저장’을 이용해 주세요.")}}
+    else{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(['<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><title>JOYLUCK CLUB</title><style>'+PCSS+'</style></head><body>'+h+'</body></html>'],{type:"text/html"}));a.download="joyluck-"+el.dataset.mode.replace(/\W/g,"-")+".html";document.body.appendChild(a);a.click();a.remove();toast("파일을 저장했어요. 열어서 인쇄해 주세요")}
+    return;
+  }
+  if(act==="att"&&b)await write({op:"att",bookId:b.id,status:el.dataset.s});
+  if(act==="post"&&b){const t=el.dataset.type,v=(S.draft[t]||"").trim();if(!v){toast("내용을 입력해 주세요");return}
+    if(await write({op:"entry",bookId:b.id,type:t,text:v,rating:t==="review"?S.rating:null})){S.draft[t]="";render();toast("등록했어요")}}
+  if(act==="del"&&confirm("삭제할까요?"))await write({op:"del",id:el.dataset.id});
+  if(act==="saveSch"&&b){if(await write({op:"sched",id:b.id,meetDate:$("#sd").value,place:$("#sp").value.trim()}))toast("일정을 저장했어요")}
+  if(act==="bsearch"){const q=(S.bf.q||"").trim();if(!q){toast("검색어를 입력해 주세요");return}
+    S.bfOpen=true;S.searching=true;S.res=[];render();
+    try{S.res=await searchBooks(q);if(!S.res.length)toast("검색 결과가 없어요. 직접 입력해 주세요")}catch(er){toast(er.message)}
+    S.searching=false;render();return}
+  if(act==="bsel"){const x=S.res[+el.dataset.i];if(x){Object.assign(S.bf,{title:x.title+(x.sub?": "+x.sub:""),author:x.author,cover:x.cover});S.res=[];S.bfOpen=true;render()}return}
+  if(act==="addBook"){const f=S.bf;if(!(f.title||"").trim()){toast("책 제목을 입력해 주세요");return}
+    try{const r=await api({op:"book",uid:S.uid,title:f.title.trim(),author:(f.author||"").trim(),month:f.month||"",meetDate:f.meetDate||"",place:(f.place||"").trim(),cover:f.cover||""});
+      S.bf={};S.bfOpen=false;S.res=[];S.cur=r.id;S.tab="home";await load();toast("책을 등록했어요")}catch(er){toast(er.message)}}
+});
+/* ---------- 시작 ---------- */
+(async()=>{
+  render();
+  if(S.code&&S.name){try{await api({op:"join",uid:S.uid,name:S.name})}catch(_){}}
+  await load();
+  setInterval(()=>{const a=document.activeElement;if(!S.auth||document.hidden)return;if(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))return;if(document.querySelector("details[open]"))return;load()},10000);
+})();
+
+</script>
+</body>
+</html>
