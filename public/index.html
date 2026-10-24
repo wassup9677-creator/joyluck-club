@@ -90,7 +90,7 @@ details summary{cursor:pointer;color:var(--red);font-weight:700}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const ls={get:k=>{try{return localStorage.getItem(k)}catch(_){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}}};
-const S={books:[],entries:[],att:[],members:[],uid:ls.get("jl_uid"),name:ls.get("jl_name")||"",code:ls.get("jl_code")||"",cur:null,tab:"home",draft:{},ready:false,auth:false,rating:5,seg:"review",pics:{review:[],prompt:[]},ed:null,err:"",bf:{},bfEdit:null,src:"",res:[],bfOpen:false,searching:false};
+const S={books:[],entries:[],att:[],members:[],uid:ls.get("jl_uid"),name:ls.get("jl_name")||"",code:ls.get("jl_code")||"",cur:null,tab:"home",draft:{},ready:false,auth:false,rating:5,seg:"review",pickUntil:0,pics:{review:[],prompt:[]},ed:null,err:"",bf:{},bfEdit:null,src:"",res:[],bfOpen:false,searching:false};
 if(!S.uid){S.uid="u"+Math.random().toString(36).slice(2,10)+Date.now().toString(36);ls.set("jl_uid",S.uid)}
 const hm=/code=([^&]+)/.exec(location.hash);
 if(hm){try{S.code=decodeURIComponent(hm[1])}catch(_){S.code=hm[1]}ls.set("jl_code",S.code);history.replaceState(null,"",location.pathname)}
@@ -109,9 +109,9 @@ async function api(body,qs){
   if(!r.ok){const e=new Error(j.error||"요청에 실패했어요");e.status=r.status;throw e}
   return j;
 }
-async function load(){
-  try{const d=await api();S.books=d.books;S.entries=d.entries;S.att=d.att;S.members=d.members;sortBooks();S.auth=true;S.ready=true;render()}
-  catch(e){S.ready=true;if(e.status===401){S.auth=false;S.err=S.code?e.message:""}else if(!S.auth)S.err=e.message;else toast(e.message);render()}
+async function load(quiet){
+  try{const d=await api();S.books=d.books;S.entries=d.entries;S.att=d.att;S.members=d.members;sortBooks();S.auth=true;S.ready=true;if(!quiet)render()}
+  catch(e){S.ready=true;if(e.status===401){S.auth=false;S.err=S.code?e.message:""}else if(!S.auth)S.err=e.message;else if(!quiet)toast(e.message);if(!quiet)render()}
 }
 async function write(body){try{await api(Object.assign({uid:S.uid},body));await load();return true}catch(e){toast(e.message);return false}}
 
@@ -186,7 +186,13 @@ async function addFiles(arr,files){
     try{arr.push({url:await fileToJpeg(f)})}catch(er){toast(er.message)}
   }
 }
-async function uploadPics(arr){const ids=[];for(const x of arr){if(x.id)ids.push(x.id);else ids.push((await api({op:"img",uid:S.uid,data:x.url})).id)}return ids}
+async function uploadPics(arr){const ids=[];let n=0;
+  for(const x of arr){n++;if(x.id){ids.push(x.id);continue}
+    let id=null,last=null;
+    for(let t=0;t<3&&!id;t++){try{id=(await api({op:"img",uid:S.uid,data:x.url})).id}catch(er){last=er;if(er.status===401||er.status===400)break;await new Promise(z=>setTimeout(z,800))}}
+    if(!id)throw new Error(n+"번째 사진을 올리지 못했어요. 다시 시도해 주세요. ("+(last&&last.message||"네트워크 오류")+")");
+    ids.push(id)}
+  return ids}
 const cov=(u,c="")=>u?`<img class="cv ${c}" src="${esc(u)}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.visibility='hidden'">`:`<div class="cv ${c} ph">📖</div>`;
 const cleanAuthor=a=>String(a||"").replace(/\s*\([^)]*\)/g,"").replace(/\s*,\s*/g,", ").trim();
 async function searchBooks(q){
@@ -194,10 +200,12 @@ async function searchBooks(q){
     const j=await api(null,"?q="+encodeURIComponent(q));
     S.src="aladin";
     return (j.items||[]).map(i=>({title:i.title,sub:"",author:cleanAuthor(i.author),pub:i.pub,year:i.year,cover:i.cover})).filter(x=>x.title);
-  }catch(e){if(e.status!==501&&e.status!==502)throw e}
+  }catch(e){if(e.status!==501)throw e}
   S.src="google";
-  const r=await fetch("https://www.googleapis.com/books/v1/volumes?maxResults=8&printType=books&q="+encodeURIComponent(q));
-  if(!r.ok)throw new Error(r.status===429?"검색 요청이 많아요. 잠시 후 다시 시도해 주세요.":"검색에 실패했어요 ("+r.status+")");
+  const gu="https://www.googleapis.com/books/v1/volumes?maxResults=8&printType=books&q="+encodeURIComponent(q);
+  let r=await fetch(gu);
+  if(r.status===429){await new Promise(z=>setTimeout(z,1500));r=await fetch(gu)}
+  if(!r.ok)throw new Error(r.status===429?"Google Books 검색이 일시적으로 막혔어요. 알라딘 키(ALADIN_TTB_KEY)를 설정하면 안정적으로 검색돼요.":"검색에 실패했어요 ("+r.status+")");
   const j=await r.json();
   return (j.items||[]).map(i=>{const v=i.volumeInfo||{},im=v.imageLinks||{};
     const c=(im.thumbnail||im.smallThumbnail||"").replace(/^http:/,"https:").replace("&edge=curl","");
@@ -257,11 +265,13 @@ function printHTML(mode){
 const BF={bq:"q",bt:"title",ba:"author",bm:"month",bd:"meetDate",bp:"place"};
 document.addEventListener("input",e=>{const m=/^txt-(\w+)$/.exec(e.target.id||"");if(m)S.draft[m[1]]=e.target.value;if(BF[e.target.id])S.bf[BF[e.target.id]]=e.target.value;if(e.target.id==="ed-txt"&&S.ed)S.ed.text=e.target.value});
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="bq"){e.preventDefault();document.querySelector("[data-act=bsearch]").click()}});
-document.addEventListener("change",async e=>{const id=e.target.id||"";
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("label.btn"))S.pickUntil=Date.now()+120000},true);
+window.addEventListener("focus",()=>{if(S.pickUntil)S.pickUntil=Date.now()+4000});
+document.addEventListener("change",async e=>{const id=e.target.id||"";if(/^pic-/.test(id))S.pickUntil=Date.now()+60000;
   if(id==="pick"){S.cur=e.target.value;render()}
   if(id==="rate")S.rating=+e.target.value;
   if(id==="ed-rate"&&S.ed)S.ed.rating=+e.target.value;
-  if(/^pic-/.test(id)){const w=id.slice(4),arr=w==="ed"?(S.ed&&S.ed.pics):S.pics[w];if(arr){await addFiles(arr,e.target.files);e.target.value="";render()}}
+  if(/^pic-/.test(id)){const w=id.slice(4),arr=w==="ed"?(S.ed&&S.ed.pics):S.pics[w];if(arr){await addFiles(arr,e.target.files);e.target.value="";S.pickUntil=0;render()}}
 });
 $("#lb").addEventListener("click",()=>{$("#lb").style.display="none"});
 document.addEventListener("click",async e=>{
@@ -320,7 +330,11 @@ document.addEventListener("click",async e=>{
   render();
   if(S.code&&S.name){try{await api({op:"join",uid:S.uid,name:S.name})}catch(_){}}
   await load();
-  setInterval(()=>{const a=document.activeElement;if(!S.auth||document.hidden)return;if(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))return;if(document.querySelector("details[open]"))return;load()},10000);
+  setInterval(()=>{
+    if(!S.auth||document.hidden)return;
+    const a=document.activeElement;
+    const busy=Date.now()<S.pickUntil||(a&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))||document.querySelector("details[open]")||S.ed||S.pics.review.length||S.pics.prompt.length||(S.draft.review||"").trim()||(S.draft.prompt||"").trim();
+    load(!!busy)},10000);
 })();
 
 </script>
