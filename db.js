@@ -46,24 +46,43 @@ module.exports = async (req, res) => {
   if (!sameCode(req.headers["x-club-code"])) return res.status(401).json({ error: "초대 코드가 맞지 않아요" });
   try {
     if (req.method === "GET" && req.query && req.query.q) {
-      const key = (process.env.ALADIN_TTB_KEY || "").trim();
-      if (!key) return res.status(501).json({ error: "noKey" });
-      const u = "https://www.aladin.co.kr/ttb/api/ItemSearch.aspx?" + new URLSearchParams({
-        ttbkey: key, Query: String(req.query.q).slice(0, 100), QueryType: "Keyword", MaxResults: "10", start: "1",
-        SearchTarget: "Book", output: "js", Version: "20131101", Cover: "Big",
-      });
-      const x = await fetch(u);
-      const t = (await x.text()).trim().replace(/;\s*$/, "");
-      let j;
-      try { j = JSON.parse(t); } catch (_) {
-        try { j = JSON.parse(t.replace(/[\u0000-\u001f]/g, " ")); } catch (e2) { return res.status(502).json({ error: "알라딘 응답을 읽을 수 없어요" }); }
+      const q = String(req.query.q).slice(0, 100);
+      const kakao = (process.env.KAKAO_REST_KEY || "").trim();
+      const aladin = (process.env.ALADIN_TTB_KEY || "").trim();
+      if (!kakao && !aladin) return res.status(501).json({ error: "noKey" });
+      const errs = [];
+      if (kakao) {
+        try {
+          const x = await fetch("https://dapi.kakao.com/v3/search/book?" + new URLSearchParams({ query: q, size: "10" }), {
+            headers: { Authorization: "KakaoAK " + kakao },
+          });
+          const j = await x.json();
+          if (!x.ok) throw new Error(j.message || "HTTP " + x.status);
+          const items = (j.documents || []).map((d) => ({
+            title: s(d.title, 200), author: s((d.authors || []).join(", "), 150), pub: s(d.publisher, 60),
+            year: s(d.datetime, 4), cover: String(d.thumbnail || "").replace(/^http:/, "https:").slice(0, 500),
+          }));
+          return res.status(200).json({ items, src: "kakao" });
+        } catch (e) { errs.push("카카오: " + e.message); }
       }
-      if (j.errorCode) return res.status(502).json({ error: "알라딘 오류: " + (j.errorMessage || j.errorCode) });
-      const items = (j.item || []).map((i) => ({
-        title: s(i.title, 200), author: s(i.author, 150), pub: s(i.publisher, 60), year: s(i.pubDate, 4),
-        cover: String(i.cover || "").replace(/^http:/, "https:").slice(0, 500),
-      }));
-      return res.status(200).json({ items });
+      if (aladin) {
+        try {
+          const x = await fetch("https://www.aladin.co.kr/ttb/api/ItemSearch.aspx?" + new URLSearchParams({
+            ttbkey: aladin, Query: q, QueryType: "Keyword", MaxResults: "10", start: "1",
+            SearchTarget: "Book", output: "js", Version: "20131101", Cover: "Big",
+          }));
+          const t = (await x.text()).trim().replace(/;\s*$/, "");
+          let j;
+          try { j = JSON.parse(t); } catch (_) { j = JSON.parse(t.replace(/[\u0000-\u001f]/g, " ")); }
+          if (j.errorCode) throw new Error(j.errorMessage || j.errorCode);
+          const items = (j.item || []).map((i) => ({
+            title: s(i.title, 200), author: s(i.author, 150), pub: s(i.publisher, 60), year: s(i.pubDate, 4),
+            cover: String(i.cover || "").replace(/^http:/, "https:").slice(0, 500),
+          }));
+          return res.status(200).json({ items, src: "aladin" });
+        } catch (e) { errs.push("알라딘: " + e.message); }
+      }
+      return res.status(502).json({ error: errs.join(" / ") });
     }
     if (req.method === "GET") {
       const [books, entries, att, members] = await Promise.all(

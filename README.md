@@ -30,3 +30,8 @@
 - 가입: https://www.aladin.co.kr/ttb/wjoinus.aspx → 키 확인: https://www.aladin.co.kr/ttb/wblog_manage.aspx
 - 키가 없으면 Google Books로 검색합니다.
 - 키는 서버에서만 사용되어 화면에 노출되지 않습니다. (하루 5,000회 제한)
+
+## 책 검색 우선순위 (업데이트)
+1. **카카오(Daum) 책 검색** — 환경변수 `KAKAO_REST_KEY` (https://developers.kakao.com → 내 애플리케이션 → 앱 만들기 → REST API 키)
+2. 알라딘 — 환경변수 `ALADIN_TTB_KEY` (선택)
+3. Google Books — 키 없이 사용 (요청이 몰리면 제한될 수 있음)
