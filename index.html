@@ -82,6 +82,7 @@ details summary{cursor:pointer;color:var(--red);font-weight:700}
 <header><div class="mark"><i></i><i></i><i></i><i></i></div><h1>JOYLUCK CLUB</h1><div class="sub">함께 읽고, 기록하고, 나누는 독서모임</div></header>
 <nav id="nav"></nav>
 <main id="app"><div class="empty">불러오는 중…</div></main>
+<div style="text-align:center;margin-top:28px;font-size:11px;color:var(--mute)">JOYLUCK CLUB · v4 · 네이버/Google 책 검색</div>
 </div>
 <div id="toast"></div>
 <div id="print"></div>
@@ -198,7 +199,13 @@ const cov=(u,c="")=>u?`<img class="cv ${c}" src="${esc(cvu(u))}" data-o="${esc(u
 const cleanAuthor=a=>String(a||"").replace(/\s*\([^)]*\)/g,"").replace(/\s*,\s*/g,", ").trim();
 const GCACHE={};
 async function searchBooks(q){
-  S.src="google";S.note="";
+  S.note="";
+  try{
+    const j=await api(null,"?q="+encodeURIComponent(q));
+    S.src=j.src||"naver";
+    return (j.items||[]).filter(x=>x.title);
+  }catch(e){if(e.status===502)S.note=e.message+" — Google Books로 대신 검색했어요.";else if(e.status!==501)throw e}
+  S.src="google";
   const key=q.toLowerCase();if(GCACHE[key])return GCACHE[key];
   const hangul=/[가-힯]/.test(q);
   const fields="items(id,volumeInfo(title,subtitle,authors,publisher,publishedDate,imageLinks,industryIdentifiers))";
@@ -221,7 +228,7 @@ async function searchBooks(q){
 function booksView(){
   const f=S.bf,ed=S.bfEdit,eb=ed&&S.books.find(x=>x.id===ed),open=S.bfOpen||S.res.length||f.title||ed;
   const res=S.searching?'<div class="meta">검색 중…</div>':S.res.map((x,i)=>`<div class="sr" data-act="bsel" data-i="${i}">${cov(x.cover,"sm")}<div style="min-width:0"><b>${esc(x.title)}</b><div class="meta">${esc(x.author||"저자 미상")}${x.pub?" · "+esc(x.pub):""}${x.year?" · "+esc(x.year):""}</div></div></div>`).join("");
-  const credit=S.src?`<div class="meta">${S.src==="kakao"?"도서 정보 제공: Daum(카카오) 책 검색":S.src==="aladin"?'도서 정보 제공: <a href="https://www.aladin.co.kr" target="_blank" rel="noopener" style="color:var(--red)">알라딘 인터넷서점</a>':"도서 정보 제공: Google Books"}</div>`:"";
+  const credit=S.src?`<div class="meta">${S.src==="naver"?"도서 정보 제공: 네이버 책 검색":S.src==="kakao"?"도서 정보 제공: Daum(카카오) 책 검색":S.src==="aladin"?'도서 정보 제공: <a href="https://www.aladin.co.kr" target="_blank" rel="noopener" style="color:var(--red)">알라딘 인터넷서점</a>':"도서 정보 제공: Google Books"}</div>`:"";
   const note=S.note?`<div class="meta" style="color:var(--red)">${esc(S.note)}</div>`:"";
   const btns=ed?`<div class="row"><button class="btn" data-act="bsave">저장</button><button class="btn ghost" data-act="bcancel">취소</button>${eb&&eb.uid===S.uid?'<button class="btn ghost" data-act="bdel" style="color:var(--red)">삭제</button>':""}</div>`:'<button class="btn" data-act="addBook">등록</button>';
   const form=`<details class="card" ${open?"open":""}><summary>${ed?"✏️ 책 수정":"＋ 새 책 등록"}</summary><div class="g">
