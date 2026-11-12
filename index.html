@@ -193,23 +193,30 @@ async function uploadPics(arr){const ids=[];let n=0;
     if(!id)throw new Error(n+"번째 사진을 올리지 못했어요. 다시 시도해 주세요. ("+(last&&last.message||"네트워크 오류")+")");
     ids.push(id)}
   return ids}
-const cov=(u,c="")=>u?`<img class="cv ${c}" src="${esc(u)}" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.visibility='hidden'">`:`<div class="cv ${c} ph">📖</div>`;
+const cvu=u=>/^https?:/.test(u)?"/api/db?cover="+encodeURIComponent(u):u;
+const cov=(u,c="")=>u?`<img class="cv ${c}" src="${esc(cvu(u))}" data-o="${esc(u)}" alt="" loading="lazy" onerror="if(!this.dataset.t){this.dataset.t=1;this.referrerPolicy='no-referrer';this.src=this.dataset.o}else this.style.visibility='hidden'">`:`<div class="cv ${c} ph">📖</div>`;
 const cleanAuthor=a=>String(a||"").replace(/\s*\([^)]*\)/g,"").replace(/\s*,\s*/g,", ").trim();
+const GCACHE={};
 async function searchBooks(q){
-  try{
-    const j=await api(null,"?q="+encodeURIComponent(q));
-    S.src=j.src||"kakao";
-    return (j.items||[]).map(i=>({title:i.title,sub:"",author:cleanAuthor(i.author),pub:i.pub,year:i.year,cover:i.cover})).filter(x=>x.title);
-  }catch(e){if(e.status===502)S.note=e.message+" — Google Books로 대신 검색했어요.";else if(e.status!==501)throw e}
-  S.src="google";
-  const gu="https://www.googleapis.com/books/v1/volumes?maxResults=8&printType=books&q="+encodeURIComponent(q);
-  let r=await fetch(gu);
-  if(r.status===429){await new Promise(z=>setTimeout(z,1500));r=await fetch(gu)}
-  if(!r.ok)throw new Error(r.status===429?"Google Books 검색이 일시적으로 막혔어요. 알라딘 키(ALADIN_TTB_KEY)를 설정하면 안정적으로 검색돼요.":"검색에 실패했어요 ("+r.status+")");
-  const j=await r.json();
-  return (j.items||[]).map(i=>{const v=i.volumeInfo||{},im=v.imageLinks||{};
-    const c=(im.thumbnail||im.smallThumbnail||"").replace(/^http:/,"https:").replace("&edge=curl","");
+  S.src="google";S.note="";
+  const key=q.toLowerCase();if(GCACHE[key])return GCACHE[key];
+  const hangul=/[가-힯]/.test(q);
+  const fields="items(id,volumeInfo(title,subtitle,authors,publisher,publishedDate,imageLinks,industryIdentifiers))";
+  const run=async(lang)=>{
+    const u="https://www.googleapis.com/books/v1/volumes?maxResults=12&printType=books&orderBy=relevance&fields="+encodeURIComponent(fields)+(lang?"&langRestrict=ko":"")+"&q="+encodeURIComponent(q);
+    let r=await fetch(u);
+    for(const wait of [1200,2500]){if(r.status!==429)break;await new Promise(z=>setTimeout(z,wait));r=await fetch(u)}
+    if(r.status===429)throw new Error("Google Books 검색이 잠시 몰렸어요. 잠시 후 다시 검색해 주세요.");
+    if(!r.ok)throw new Error("검색에 실패했어요 ("+r.status+")");
+    return (await r.json()).items||[];
+  };
+  let items=await run(hangul);
+  if(!items.length&&hangul)items=await run(false);
+  const out=items.map(i=>{const v=i.volumeInfo||{},im=v.imageLinks||{};
+    let c=(im.thumbnail||im.smallThumbnail||"").replace(/^http:/,"https:").replace("&edge=curl","");
+    if(!c){const isbn=((v.industryIdentifiers||[]).find(x=>x.type==="ISBN_13")||{}).identifier;if(isbn)c="https://covers.openlibrary.org/b/isbn/"+isbn+"-M.jpg?default=false"}
     return{title:v.title||"",sub:v.subtitle||"",author:(v.authors||[]).join(", "),pub:v.publisher||"",year:(v.publishedDate||"").slice(0,4),cover:c}}).filter(x=>x.title);
+  GCACHE[key]=out;return out;
 }
 function booksView(){
   const f=S.bf,ed=S.bfEdit,eb=ed&&S.books.find(x=>x.id===ed),open=S.bfOpen||S.res.length||f.title||ed;
