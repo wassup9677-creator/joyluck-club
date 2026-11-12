@@ -24,6 +24,7 @@ const s = (v, n) => String(v == null ? "" : v).slice(0, n);
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const imgIds = (a) => (Array.isArray(a) ? a.filter((x) => /^[a-f0-9]{24}$/.test(x)).slice(0, 3) : []);
 const coverOk = (c) => (/^https:\/\//.test(s(c, 500)) ? s(c, 500) : "");
+const COVER_HOSTS = [/(^|\.)kakaocdn\.net$/, /(^|\.)daumcdn\.net$/, /(^|\.)aladin\.co\.kr$/, /^books\.google\.com$/, /(^|\.)googleusercontent\.com$/, /(^|\.)gstatic\.com$/, /^covers\.openlibrary\.org$/];
 const dateOk = (d) => d === "" || /^\d{4}-\d{2}-\d{2}$/.test(d);
 
 module.exports = async (req, res) => {
@@ -38,6 +39,22 @@ module.exports = async (req, res) => {
       return res.status(200).send(Buffer.from(String(d).split(",")[1], "base64"));
     } catch (_) {
       return res.status(500).end();
+    }
+  }
+  if (req.method === "GET" && req.query && req.query.cover) {
+    try {
+      const u = new URL(String(req.query.cover));
+      if (u.protocol !== "https:" || !COVER_HOSTS.some((re) => re.test(u.hostname))) return res.status(400).end();
+      const x = await fetch(u.href, { headers: { "User-Agent": "Mozilla/5.0 JoyluckClub", Accept: "image/*" } });
+      const ct = x.headers.get("content-type") || "";
+      if (!x.ok || !ct.startsWith("image/")) return res.status(404).end();
+      const buf = Buffer.from(await x.arrayBuffer());
+      if (buf.length > 3000000) return res.status(413).end();
+      res.setHeader("Content-Type", ct);
+      res.setHeader("Cache-Control", "public, max-age=604800, s-maxage=604800");
+      return res.status(200).send(buf);
+    } catch (_) {
+      return res.status(404).end();
     }
   }
   res.setHeader("Cache-Control", "no-store");
