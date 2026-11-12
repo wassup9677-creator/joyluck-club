@@ -2,13 +2,20 @@
 // 환경변수 이름에 접두사가 붙어 있어도(예: STORAGE_KV_REST_API_URL) 자동으로 찾습니다.
 const pick = (re) => { const k = Object.keys(process.env).find((n) => re.test(n) && process.env[n]); return k ? process.env[k].trim().replace(/^["']|["']$/g, "").trim() : undefined; };
 const crypto = require("crypto");
-const URL_ = pick(/(^|_)(KV_REST_API_URL|UPSTASH_REDIS_REST_URL)$/);
+const rawUrl = pick(/(^|_)(KV_REST_API_URL|UPSTASH_REDIS_REST_URL)$/);
+const URL_ = rawUrl && !/^rediss?:\/\//i.test(rawUrl) ? (/^https?:\/\//i.test(rawUrl) ? rawUrl : "https://" + rawUrl).replace(/\/+$/, "") : undefined;
+const BAD_URL = rawUrl && !URL_;
 const TOK = pick(/(^|_)(KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN)$/);
 const CODE = (process.env.CLUB_CODE || "").trim();
 const sameCode = (h) => { try { return decodeURIComponent(String(h || "")).trim() === CODE; } catch (_) { return false; } };
 
 async function r(cmd) {
-  const x = await fetch(URL_, { method: "POST", headers: { Authorization: "Bearer " + TOK }, body: JSON.stringify(cmd) });
+  let x;
+  try {
+    x = await fetch(URL_, { method: "POST", headers: { Authorization: "Bearer " + TOK }, body: JSON.stringify(cmd) });
+  } catch (e) {
+    throw new Error("Redis에 연결하지 못했어요. KV_REST_API_URL이 https://…upstash.io 형태의 REST 주소인지 확인해 주세요.");
+  }
   const j = await x.json();
   if (j.error) throw new Error(j.error);
   return j.result;
@@ -58,6 +65,7 @@ module.exports = async (req, res) => {
     }
   }
   res.setHeader("Cache-Control", "no-store");
+  if (BAD_URL) return res.status(500).json({ error: "KV_REST_API_URL에 redis:// 주소가 들어 있어요. Upstash 콘솔의 REST API 항목에 있는 https:// 주소로 바꿔 주세요." });
   const missing = [!CODE && "CLUB_CODE", !URL_ && "Redis URL(KV_REST_API_URL)", !TOK && "Redis TOKEN(KV_REST_API_TOKEN)"].filter(Boolean);
   if (missing.length) return res.status(500).json({ error: "서버 설정이 필요해요: " + missing.join(", ") + " 이(가) 없어요. 설정 후 Redeploy 해주세요." });
   if (!sameCode(req.headers["x-club-code"])) return res.status(401).json({ error: "초대 코드가 맞지 않아요" });
