@@ -1,6 +1,6 @@
 // JOYLUCK CLUB API — Vercel Serverless Function (Node) + Upstash Redis (REST)
 // 환경변수 이름에 접두사가 붙어 있어도(예: STORAGE_KV_REST_API_URL) 자동으로 찾습니다.
-const pick = (re) => { const k = Object.keys(process.env).find((n) => re.test(n) && process.env[n]); return k ? process.env[k] : undefined; };
+const pick = (re) => { const k = Object.keys(process.env).find((n) => re.test(n) && process.env[n]); return k ? process.env[k].trim().replace(/^["']|["']$/g, "").trim() : undefined; };
 const crypto = require("crypto");
 const URL_ = pick(/(^|_)(KV_REST_API_URL|UPSTASH_REDIS_REST_URL)$/);
 const TOK = pick(/(^|_)(KV_REST_API_TOKEN|UPSTASH_REDIS_REST_TOKEN)$/);
@@ -70,6 +70,20 @@ module.exports = async (req, res) => {
       const aladin = (process.env.ALADIN_TTB_KEY || "").trim();
       if (!(nId && nSec) && !kakao && !aladin) return res.status(501).json({ error: "noKey" });
       const errs = [];
+      if (kakao) {
+        try {
+          const x = await fetch("https://dapi.kakao.com/v3/search/book?" + new URLSearchParams({ query: q, size: "12", sort: "accuracy" }), {
+            headers: { Authorization: "KakaoAK " + kakao },
+          });
+          const j = await x.json();
+          if (!x.ok) throw new Error(j.message || "HTTP " + x.status);
+          const items = (j.documents || []).map((d) => ({
+            title: s(d.title, 200), author: s((d.authors || []).join(", "), 150), pub: s(d.publisher, 60),
+            year: s(d.datetime, 4), cover: String(d.thumbnail || "").replace(/^http:/, "https:").slice(0, 500),
+          }));
+          return res.status(200).json({ items, src: "kakao" });
+        } catch (e) { errs.push("카카오: " + e.message); }
+      }
       if (nId && nSec) {
         try {
           const x = await fetch("https://openapi.naver.com/v1/search/book.json?" + new URLSearchParams({ query: q, display: "10", sort: "sim" }), {
@@ -84,20 +98,6 @@ module.exports = async (req, res) => {
           }));
           return res.status(200).json({ items, src: "naver" });
         } catch (e) { errs.push("네이버: " + e.message); }
-      }
-      if (kakao) {
-        try {
-          const x = await fetch("https://dapi.kakao.com/v3/search/book?" + new URLSearchParams({ query: q, size: "10" }), {
-            headers: { Authorization: "KakaoAK " + kakao },
-          });
-          const j = await x.json();
-          if (!x.ok) throw new Error(j.message || "HTTP " + x.status);
-          const items = (j.documents || []).map((d) => ({
-            title: s(d.title, 200), author: s((d.authors || []).join(", "), 150), pub: s(d.publisher, 60),
-            year: s(d.datetime, 4), cover: String(d.thumbnail || "").replace(/^http:/, "https:").slice(0, 500),
-          }));
-          return res.status(200).json({ items, src: "kakao" });
-        } catch (e) { errs.push("카카오: " + e.message); }
       }
       if (aladin) {
         try {

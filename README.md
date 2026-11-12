@@ -42,3 +42,7 @@
 3. 발급된 Client ID / Client Secret을 Vercel 환경변수에 추가
    - `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` (Secret 타입 권장) → Redeploy
 검색 순서: 네이버 → 카카오 → 알라딘 → Google Books (키가 있는 것부터 순서대로, 실패하면 다음으로)
+
+## 검색 순서 (최종)
+카카오(Daum) 책 검색 → 네이버 → 알라딘 → Google Books. 키가 설정된 것부터 순서대로 시도하고, 실패하면 다음으로 넘어갑니다.
+카카오는 `KAKAO_REST_KEY`(REST API 키) 하나만 있으면 됩니다.
