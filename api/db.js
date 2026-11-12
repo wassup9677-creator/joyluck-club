@@ -24,7 +24,7 @@ const s = (v, n) => String(v == null ? "" : v).slice(0, n);
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const imgIds = (a) => (Array.isArray(a) ? a.filter((x) => /^[a-f0-9]{24}$/.test(x)).slice(0, 3) : []);
 const coverOk = (c) => (/^https:\/\//.test(s(c, 500)) ? s(c, 500) : "");
-const COVER_HOSTS = [/(^|\.)kakaocdn\.net$/, /(^|\.)daumcdn\.net$/, /(^|\.)aladin\.co\.kr$/, /^books\.google\.com$/, /(^|\.)googleusercontent\.com$/, /(^|\.)gstatic\.com$/, /^covers\.openlibrary\.org$/];
+const COVER_HOSTS = [/(^|\.)pstatic\.net$/, /(^|\.)kakaocdn\.net$/, /(^|\.)daumcdn\.net$/, /(^|\.)aladin\.co\.kr$/, /^books\.google\.com$/, /(^|\.)googleusercontent\.com$/, /(^|\.)gstatic\.com$/, /^covers\.openlibrary\.org$/];
 const dateOk = (d) => d === "" || /^\d{4}-\d{2}-\d{2}$/.test(d);
 
 module.exports = async (req, res) => {
@@ -64,10 +64,27 @@ module.exports = async (req, res) => {
   try {
     if (req.method === "GET" && req.query && req.query.q) {
       const q = String(req.query.q).slice(0, 100);
+      const nId = (process.env.NAVER_CLIENT_ID || "").trim();
+      const nSec = (process.env.NAVER_CLIENT_SECRET || "").trim();
       const kakao = (process.env.KAKAO_REST_KEY || "").trim();
       const aladin = (process.env.ALADIN_TTB_KEY || "").trim();
-      if (!kakao && !aladin) return res.status(501).json({ error: "noKey" });
+      if (!(nId && nSec) && !kakao && !aladin) return res.status(501).json({ error: "noKey" });
       const errs = [];
+      if (nId && nSec) {
+        try {
+          const x = await fetch("https://openapi.naver.com/v1/search/book.json?" + new URLSearchParams({ query: q, display: "10", sort: "sim" }), {
+            headers: { "X-Naver-Client-Id": nId, "X-Naver-Client-Secret": nSec },
+          });
+          const j = await x.json();
+          if (!x.ok) throw new Error(j.errorMessage || "HTTP " + x.status);
+          const clean = (t) => String(t || "").replace(/<[^>]*>/g, "").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#39;|&apos;/g, "'");
+          const items = (j.items || []).map((d) => ({
+            title: s(clean(d.title), 200), author: s(clean(d.author).split("^").join(", "), 150), pub: s(clean(d.publisher), 60),
+            year: s(d.pubdate, 4), cover: String(d.image || "").replace(/^http:/, "https:").slice(0, 500),
+          }));
+          return res.status(200).json({ items, src: "naver" });
+        } catch (e) { errs.push("네이버: " + e.message); }
+      }
       if (kakao) {
         try {
           const x = await fetch("https://dapi.kakao.com/v3/search/book?" + new URLSearchParams({ query: q, size: "10" }), {

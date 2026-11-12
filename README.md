@@ -35,3 +35,10 @@
 1. **카카오(Daum) 책 검색** — 환경변수 `KAKAO_REST_KEY` (https://developers.kakao.com → 내 애플리케이션 → 앱 만들기 → REST API 키)
 2. 알라딘 — 환경변수 `ALADIN_TTB_KEY` (선택)
 3. Google Books — 키 없이 사용 (요청이 몰리면 제한될 수 있음)
+
+## 네이버 책 검색 (권장, 우선 사용)
+1. https://developers.naver.com → 로그인 → Application → 애플리케이션 등록
+2. 사용 API에서 **검색** 선택, 환경(WEB 설정)에는 배포 주소를 입력
+3. 발급된 Client ID / Client Secret을 Vercel 환경변수에 추가
+   - `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` (Secret 타입 권장) → Redeploy
+검색 순서: 네이버 → 카카오 → 알라딘 → Google Books (키가 있는 것부터 순서대로, 실패하면 다음으로)
